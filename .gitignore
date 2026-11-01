@@ -45,3 +45,6 @@ next-env.d.ts
 
 # supabase CLI temp
 supabase/.temp/
+
+# claude-flow
+.claude-flow/
