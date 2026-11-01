@@ -37,6 +37,15 @@ function LoginPageInner() {
   // page to accept rather than to /dashboard.
   const inviteToken = searchParams.get("invite");
   const t = useTranslations("LoginPage");
+  // Set by /auth/callback when an emailed link (confirmation, password
+  // reset) could not be turned into a session — see src/lib/auth/callback.ts.
+  const linkError = searchParams.get("error");
+  const linkErrorMessage =
+    linkError === "link_expired"
+      ? t("linkExpired")
+      : linkError === "link_invalid"
+        ? t("linkInvalid")
+        : null;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -49,29 +58,35 @@ function LoginPageInner() {
     setError(null);
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
-      setError(error.message);
+      if (error) {
+        setError(error.message);
+        setLoading(false);
+        return;
+      }
+
+      // Full-page navigation (not router.push) so the browser issues a
+      // fresh top-level request that carries the just-written Supabase
+      // auth cookies to the middleware gating /dashboard. A soft
+      // client-side navigation can reach the protected route before the
+      // server observes the new session, so the middleware bounces it
+      // back to /login — which looks like the page "just refreshing"
+      // instead of signing in (issue #365). Mirrors the deliberate full
+      // reload the invite-accept flow already uses in join/[token].
+      const destination = inviteToken
+        ? `/join/${encodeURIComponent(inviteToken)}`
+        : "/dashboard";
+      window.location.href = destination;
+    } catch {
+      setError("Unable to connect to the server. Please check your internet connection and try again.");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    // Full-page navigation (not router.push) so the browser issues a
-    // fresh top-level request that carries the just-written Supabase
-    // auth cookies to the middleware gating /dashboard. A soft
-    // client-side navigation can reach the protected route before the
-    // server observes the new session, so the middleware bounces it
-    // back to /login — which looks like the page "just refreshing"
-    // instead of signing in (issue #365). Mirrors the deliberate full
-    // reload the invite-accept flow already uses in join/[token].
-    const destination = inviteToken
-      ? `/join/${encodeURIComponent(inviteToken)}`
-      : "/dashboard";
-    window.location.href = destination;
   };
 
   return (
@@ -96,6 +111,11 @@ function LoginPageInner() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="flex flex-col gap-4">
+            {linkErrorMessage && !error && (
+              <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
+                {linkErrorMessage}
+              </div>
+            )}
             {error && (
               <div className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
                 {error}
