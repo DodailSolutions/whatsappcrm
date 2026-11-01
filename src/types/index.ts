@@ -55,6 +55,8 @@ export interface Profile {
 export interface Account {
   id: string;
   name: string;
+  is_demo?: boolean;
+  industry?: string;
   /** auth.users.id of the immutable owner. */
   owner_user_id: string;
   created_at: string;
@@ -74,6 +76,7 @@ export interface AccountMember {
   email: string | null;
   avatar_url: string | null;
   role: AccountRole;
+  status?: "active" | "deactivated";
   joined_at: string;
 }
 
@@ -100,6 +103,7 @@ export interface Contact {
   id: string;
   user_id: string;
   account_id: string;
+  lead_source?: string;
   /** Empty string for a contact Meta only ever identified by BSUID —
    *  see `wa_user_id`. */
   phone: string;
@@ -177,6 +181,8 @@ export interface Conversation {
   last_message_text?: string;
   last_message_at?: string;
   unread_count: number;
+  follow_up_at?: string | null;
+  follow_up_note?: string | null;
   created_at: string;
   updated_at: string;
   contact?: Contact;
@@ -245,6 +251,7 @@ export interface Message {
   media_type?: string | null;
   template_name?: string;
   message_id?: string;
+  is_simulated?: boolean;
   status: MessageStatus;
   created_at: string;
   reply_to_message_id?: string;

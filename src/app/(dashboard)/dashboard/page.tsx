@@ -9,6 +9,8 @@ import {
   UserPlus,
   DollarSign,
   Send,
+  Clock,
+  Trophy,
 } from 'lucide-react'
 
 import {
@@ -28,6 +30,7 @@ import type {
 
 import { MetricCard } from '@/components/dashboard/metric-card'
 import { SkeletonCard } from '@/components/dashboard/skeleton'
+import { OnboardingBanner } from '@/components/onboarding/onboarding-banner'
 import { QuickActions } from '@/components/dashboard/quick-actions'
 import { ConversationsChart } from '@/components/dashboard/conversations-chart'
 import { PipelineDonut } from '@/components/dashboard/pipeline-donut'
@@ -131,16 +134,20 @@ export default function DashboardPage() {
         </p>
       </div>
 
+      {/* Onboarding progress banner */}
+      <OnboardingBanner />
+
       {/* Metric cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {metricsLoading || !metrics ? (
-          Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
+          Array.from({ length: 5 }).map((_, i) => <SkeletonCard key={i} />)
         ) : (
           <>
             <MetricCard
               title={t('activeConversations')}
               value={metrics.activeConversations.current.toLocaleString()}
               icon={MessageSquare}
+              href="/inbox"
               delta={{
                 sign: metrics.activeConversations.previous,
                 label: deltaLabel(
@@ -151,9 +158,17 @@ export default function DashboardPage() {
               }}
             />
             <MetricCard
+              title="Follow-ups Due"
+              value={(metrics.followUpsDue ?? 0).toLocaleString()}
+              icon={Clock}
+              href="/inbox"
+              subtitle="Overdue or due today"
+            />
+            <MetricCard
               title={t('newContactsToday')}
               value={metrics.newContactsToday.current.toLocaleString()}
               icon={UserPlus}
+              href="/contacts"
               delta={{
                 sign:
                   metrics.newContactsToday.current - metrics.newContactsToday.previous,
@@ -168,21 +183,15 @@ export default function DashboardPage() {
               title={t('openDealsValue')}
               value={formatCurrency(metrics.openDealsValue, defaultCurrency)}
               icon={DollarSign}
+              href="/pipelines"
               subtitle={t('openDeals', { count: metrics.openDealsCount })}
             />
             <MetricCard
-              title={t('messagesSentToday')}
-              value={metrics.messagesSentToday.current.toLocaleString()}
-              icon={Send}
-              delta={{
-                sign:
-                  metrics.messagesSentToday.current - metrics.messagesSentToday.previous,
-                label: deltaLabel(
-                  metrics.messagesSentToday.current - metrics.messagesSentToday.previous,
-                  t('vsYesterday'),
-                  t('noChange', { suffix: t('vsYesterday') })
-                ),
-              }}
+              title="Deals Won"
+              value={formatCurrency(metrics.dealsWonValue ?? 0, defaultCurrency)}
+              icon={Trophy}
+              href="/pipelines"
+              subtitle={`${metrics.dealsWonCount ?? 0} deals closed won`}
             />
           </>
         )}

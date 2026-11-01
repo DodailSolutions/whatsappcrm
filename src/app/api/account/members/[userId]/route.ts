@@ -19,6 +19,8 @@ import type { PostgrestError } from "@supabase/supabase-js";
 
 import { requireRole, toErrorResponse } from "@/lib/auth/account";
 import { isAccountRole } from "@/lib/auth/roles";
+import { logAuditEvent } from "@/lib/audit/log";
+import { supabaseAdmin } from "@/lib/automations/admin-client";
 import {
   checkRateLimit,
   rateLimitResponse,
@@ -61,35 +63,103 @@ export async function PATCH(
     const { userId } = await params;
 
     const body = (await request.json().catch(() => null)) as
-      | { role?: unknown }
+      | { role?: unknown; status?: unknown }
       | null;
     const role = body?.role;
+    const status = body?.status;
 
-    if (!isAccountRole(role)) {
-      return NextResponse.json(
-        { error: t('account.members.roleInvalid') },
-        { status: 400 },
-      );
+    const admin = supabaseAdmin();
+
+    // 1. Status update (deactivate / reactivate)
+    if (status === "active" || status === "deactivated") {
+      if (userId === ctx.userId) {
+        return NextResponse.json(
+          { error: "Cannot change your own membership status" },
+          { status: 400 }
+        );
+      }
+
+      const { data: targetAccount } = await admin
+        .from("accounts")
+        .select("owner_user_id")
+        .eq("id", ctx.accountId)
+        .single();
+
+      if (targetAccount?.owner_user_id === userId) {
+        return NextResponse.json(
+          { error: "Cannot deactivate workspace owner" },
+          { status: 400 }
+        );
+      }
+
+      const { error: statusErr } = await admin
+        .from("account_members")
+        .update({ status, updated_at: new Date().toISOString() })
+        .eq("account_id", ctx.accountId)
+        .eq("user_id", userId);
+
+      if (statusErr) {
+        console.error("[members PATCH] status error:", statusErr);
+        return NextResponse.json({ error: "Failed to update member status" }, { status: 500 });
+      }
+
+      await logAuditEvent({
+        accountId: ctx.accountId,
+        userId: ctx.userId,
+        action: status === "deactivated" ? "member.deactivated" : "member.reactivated",
+        entityType: "member",
+        entityId: userId,
+        metadata: { newStatus: status },
+      });
+
+      if (!role) {
+        return NextResponse.json({ ok: true, status });
+      }
     }
 
-    // The RPC blocks promotion to / demotion from owner, but
-    // surface the friendlier 400 before crossing the wire too.
-    if (role === "owner") {
-      return NextResponse.json(
-        {
-          error:
-            t('account.members.useTransferOwnership'),
-        },
-        { status: 400 },
-      );
+    if (role !== undefined) {
+      if (!isAccountRole(role)) {
+        return NextResponse.json(
+          { error: t('account.members.roleInvalid') },
+          { status: 400 },
+        );
+      }
+
+      // The RPC blocks promotion to / demotion from owner, but
+      // surface the friendlier 400 before crossing the wire too.
+      if (role === "owner") {
+        return NextResponse.json(
+          {
+            error:
+              t('account.members.useTransferOwnership'),
+          },
+          { status: 400 },
+        );
+      }
+
+      const { error } = await ctx.supabase.rpc("set_member_role", {
+        p_user_id: userId,
+        p_new_role: role,
+      });
+
+      if (error) return rpcErrorToResponse(error);
+
+      // Keep account_members in sync
+      await admin
+        .from("account_members")
+        .update({ role, updated_at: new Date().toISOString() })
+        .eq("account_id", ctx.accountId)
+        .eq("user_id", userId);
+
+      await logAuditEvent({
+        accountId: ctx.accountId,
+        userId: ctx.userId,
+        action: "member.role_changed",
+        entityType: "member",
+        entityId: userId,
+        metadata: { newRole: role },
+      });
     }
-
-    const { error } = await ctx.supabase.rpc("set_member_role", {
-      p_user_id: userId,
-      p_new_role: role,
-    });
-
-    if (error) return rpcErrorToResponse(error);
 
     return NextResponse.json({ ok: true });
   } catch (err) {
@@ -117,6 +187,22 @@ export async function DELETE(
     });
 
     if (error) return rpcErrorToResponse(error);
+
+    // Delete from account_members
+    const admin = supabaseAdmin();
+    await admin
+      .from("account_members")
+      .delete()
+      .eq("account_id", ctx.accountId)
+      .eq("user_id", userId);
+
+    await logAuditEvent({
+      accountId: ctx.accountId,
+      userId: ctx.userId,
+      action: "member.removed",
+      entityType: "member",
+      entityId: userId,
+    });
 
     return NextResponse.json({ ok: true, newPersonalAccountId: data });
   } catch (err) {

@@ -50,20 +50,37 @@ export async function GET() {
       );
     }
 
+    // Query account_members for status
+    const { data: memberStatuses } = await ctx.supabase
+      .from("account_members")
+      .select("user_id, status, role")
+      .eq("account_id", ctx.accountId);
+
+    const statusMap = new Map<string, { status: "active" | "deactivated"; role?: string }>();
+    for (const m of memberStatuses || []) {
+      statusMap.set(m.user_id, {
+        status: m.status === "deactivated" ? "deactivated" : "active",
+        role: m.role,
+      });
+    }
+
     const canSeeEmails = canManageMembers(ctx.role);
 
     const members: AccountMember[] = (data as ProfileRow[]).flatMap((row) => {
       // Defensive: the DB enum should never let an unknown role
       // through, but if a migration ever broadens the enum without
       // updating TS, skip the row rather than crash the page.
-      if (!isAccountRole(row.account_role)) return [];
+      const entry = statusMap.get(row.user_id);
+      const effectiveRole = entry?.role || row.account_role;
+      if (!isAccountRole(effectiveRole)) return [];
       return [
         {
           user_id: row.user_id,
           full_name: row.full_name ?? "",
           email: canSeeEmails ? row.email : null,
           avatar_url: row.avatar_url,
-          role: row.account_role,
+          role: effectiveRole as AccountMember["role"],
+          status: entry?.status || "active",
           joined_at: row.created_at,
         },
       ];

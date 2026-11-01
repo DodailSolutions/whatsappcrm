@@ -13,6 +13,9 @@ export interface MetricsBundle {
   openDealsValue: number
   openDealsCount: number
   messagesSentToday: MetricDelta
+  followUpsDue?: number
+  dealsWonCount?: number
+  dealsWonValue?: number
 }
 
 export interface ConversationsSeriesPoint {

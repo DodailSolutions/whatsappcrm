@@ -9,8 +9,8 @@ import {
 } from "@/lib/inbox/conversations";
 import { cn } from "@/lib/utils";
 import type { Conversation, ConversationStatus, Tag } from "@/types";
-import { Search, ChevronDown, X } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { Search, ChevronDown, X, Clock } from "lucide-react";
+import { format, formatDistanceToNow } from "date-fns";
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import {
@@ -44,7 +44,7 @@ const STATUS_COLORS: Record<ConversationStatus, string> = {
 
 
 
-type InboxFilter = ConversationStatus | "all" | "unread";
+type InboxFilter = ConversationStatus | "all" | "unread" | "follow_ups";
 
 export function ConversationList({
   activeConversationId,
@@ -57,6 +57,7 @@ export function ConversationList({
   
   const FILTER_OPTIONS: { label: string; value: InboxFilter }[] = useMemo(() => [
     { label: t("filterAll"), value: "all" },
+    { label: "Follow-ups Due", value: "follow_ups" },
     { label: t("filterUnread"), value: "unread" },
     { label: t("filterOpen"), value: "open" },
     { label: t("filterPending"), value: "pending" },
@@ -163,6 +164,8 @@ export function ConversationList({
 
     if (filter === "unread") {
       result = result.filter((c) => c.unread_count > 0);
+    } else if (filter === "follow_ups") {
+      result = result.filter((c) => !!c.follow_up_at);
     } else if (filter !== "all") {
       result = result.filter((c) => c.status === filter);
     }
@@ -498,6 +501,24 @@ function ConversationItem({
             />
           </div>
         </div>
+        {conversation.follow_up_at && (() => {
+          const isOverdue = new Date(conversation.follow_up_at) <= new Date();
+          return (
+            <div className="mt-1 flex items-center">
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-semibold",
+                  isOverdue
+                    ? "border border-red-500/40 bg-red-500/10 text-red-400"
+                    : "border border-amber-500/40 bg-amber-500/10 text-amber-300"
+                )}
+              >
+                <Clock className="size-2.5" />
+                {isOverdue ? "Overdue Follow-up" : `Follow-up ${format(new Date(conversation.follow_up_at), "MMM d, h:mm a")}`}
+              </span>
+            </div>
+          );
+        })()}
       </div>
     </button>
   );

@@ -30,7 +30,9 @@ import {
   MailX,
   Plus,
   Trash2,
+  UserCheck,
   UsersRound,
+  UserX,
 } from 'lucide-react';
 
 import {
@@ -82,6 +84,7 @@ interface Member {
   email: string | null;
   avatar_url: string | null;
   role: AccountRole;
+  status?: 'active' | 'deactivated';
   joined_at: string;
 }
 
@@ -254,6 +257,31 @@ export function MembersTab() {
     }
   }
 
+  async function handleToggleStatus(member: Member) {
+    const nextStatus = member.status === 'deactivated' ? 'active' : 'deactivated';
+    setPendingMemberAction(member.user_id);
+    try {
+      const res = await fetch(`/api/account/members/${member.user_id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        toast.error(payload.error || 'Failed to update member status');
+        return;
+      }
+      toast.success(nextStatus === 'deactivated' ? 'Member deactivated' : 'Member reactivated');
+      setMembers((prev) =>
+        prev.map((m) => (m.user_id === member.user_id ? { ...m, status: nextStatus } : m)),
+      );
+    } catch {
+      toast.error('Network error updating member status');
+    } finally {
+      setPendingMemberAction(null);
+    }
+  }
+
   async function handleRevoke(invite: Invitation) {
     try {
       const res = await fetch(`/api/account/invitations/${invite.id}`, {
@@ -385,6 +413,11 @@ export function MembersTab() {
                         <span className="truncate text-sm font-medium text-foreground">
                           {member.full_name || t('unnamed')}
                         </span>
+                        {member.status === 'deactivated' && (
+                          <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-[10px] uppercase font-semibold">
+                            Deactivated
+                          </Badge>
+                        )}
                         {isSelf && (
                           <Badge className="bg-muted text-muted-foreground border-border text-[10px] uppercase tracking-wide">
                             {t('you')}
@@ -455,15 +488,39 @@ export function MembersTab() {
                         state with a darker shade on hover so the
                         affordance reads at-a-glance. */}
                     {canManageMembers && !isOwnerRow && !isSelf && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setRemovingMember(member)}
-                        disabled={isBusy}
-                        className="border-red-500/40 bg-red-500/10 text-red-300 hover:bg-red-500/20 hover:border-red-500/60 hover:text-red-200"
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleToggleStatus(member)}
+                          disabled={isBusy}
+                          title={member.status === 'deactivated' ? 'Reactivate member' : 'Deactivate member'}
+                          className={`text-xs h-8 ${
+                            member.status === 'deactivated'
+                              ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'
+                              : 'border-amber-500/40 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20'
+                          }`}
+                        >
+                          {member.status === 'deactivated' ? (
+                            <UserCheck className="size-3.5 sm:mr-1" />
+                          ) : (
+                            <UserX className="size-3.5 sm:mr-1" />
+                          )}
+                          <span className="hidden sm:inline">
+                            {member.status === 'deactivated' ? 'Reactivate' : 'Deactivate'}
+                          </span>
+                        </Button>
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setRemovingMember(member)}
+                          disabled={isBusy}
+                          className="border-red-500/40 bg-red-500/10 text-red-300 hover:bg-red-500/20 hover:border-red-500/60 hover:text-red-200"
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </>
                     )}
                   </div>
                 </li>

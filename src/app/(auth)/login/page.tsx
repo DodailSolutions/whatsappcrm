@@ -16,7 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { AuthBrand } from "@/components/layout/brand-logo";
-import { LogIn, UsersRound } from "lucide-react";
+import { LogIn, Sparkles, UsersRound } from "lucide-react";
 
 // `useSearchParams` opts the component out of static prerendering
 // unless it sits under a Suspense boundary. We split the form into
@@ -52,7 +52,25 @@ function LoginPageInner() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
   const supabase = createClient();
+
+  const handleExploreDemo = async () => {
+    setDemoLoading(true);
+    try {
+      const res = await fetch("/api/demo/guest", { method: "POST" });
+      const data = await res.json();
+      if (res.ok && data.redirect) {
+        window.location.href = data.redirect;
+        return;
+      }
+      setError(data.error || "Could not launch demo");
+    } catch {
+      setError("Failed to launch demo session");
+    } finally {
+      setDemoLoading(false);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -164,10 +182,30 @@ function LoginPageInner() {
 
             <Button
               type="submit"
-              disabled={loading}
+              disabled={loading || demoLoading}
               className="mt-2 h-10 w-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             >
               {loading ? t('signingIn') : t('signIn')}
+            </Button>
+
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground font-medium">or</span>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              disabled={loading || demoLoading}
+              onClick={handleExploreDemo}
+              className="w-full border-primary/40 bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary font-medium flex items-center justify-center gap-2"
+            >
+              <Sparkles className={`size-4 ${demoLoading ? "animate-spin" : ""}`} />
+              {demoLoading ? "Preparing Demo..." : "Explore Interactive Demo"}
             </Button>
           </form>
 

@@ -320,6 +320,19 @@ export function MessageBubble({
               {t("aiBadge")}
             </span>
           )}
+          {message.is_simulated && (
+            <span
+              className={cn(
+                "inline-flex items-center gap-0.5 rounded-full px-1.5 py-px text-[9px] font-semibold uppercase leading-none tracking-wide",
+                isAgent
+                  ? "bg-amber-400/25 text-amber-100 border border-amber-300/30"
+                  : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+              )}
+              title="Simulated Demo Message (No external WhatsApp API dispatch)"
+            >
+              Simulated
+            </span>
+          )}
           <span
             className={cn(
               "text-[10px]",

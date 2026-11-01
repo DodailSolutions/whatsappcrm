@@ -46,6 +46,8 @@ export async function loadMetrics(db: DB): Promise<MetricsBundle> {
     openDeals,
     messagesToday,
     messagesYesterday,
+    followUps,
+    wonDeals,
   ] = await Promise.all([
     db.from('conversations').select('id', { count: 'exact', head: true }).eq('status', 'open'),
     db
@@ -77,17 +79,23 @@ export async function loadMetrics(db: DB): Promise<MetricsBundle> {
       .eq('sender_type', 'agent')
       .gte('created_at', yesterdayStart)
       .lt('created_at', todayStart),
+    db
+      .from('conversations')
+      .select('id', { count: 'exact', head: true })
+      .not('follow_up_at', 'is', null)
+      .lte('follow_up_at', new Date().toISOString()),
+    db.from('deals').select('value').eq('status', 'won'),
   ])
 
   const openDealsRows = (openDeals.data ?? []) as { value: number | null }[]
   const openDealsValue = openDealsRows.reduce((sum, d) => sum + (d.value ?? 0), 0)
 
+  const wonDealsRows = (wonDeals.data ?? []) as { value: number | null }[]
+  const wonDealsValue = wonDealsRows.reduce((sum, d) => sum + (d.value ?? 0), 0)
+
   return {
     activeConversations: {
       current: openConvCur.count ?? 0,
-      // "vs yesterday" on a current-state count has no clean answer
-      // without snapshots — we show the delta in NEW open conversations
-      // today vs yesterday. That's the business-meaningful daily signal.
       previous: (newConvToday.count ?? 0) - (newConvYesterday.count ?? 0),
     },
     newContactsToday: {
@@ -100,6 +108,9 @@ export async function loadMetrics(db: DB): Promise<MetricsBundle> {
       current: messagesToday.count ?? 0,
       previous: messagesYesterday.count ?? 0,
     },
+    followUpsDue: followUps.count ?? 0,
+    dealsWonCount: wonDealsRows.length,
+    dealsWonValue: wonDealsValue,
   }
 }
 

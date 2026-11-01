@@ -151,6 +151,52 @@ export async function POST(request: Request) {
       )
     }
 
+    // Check if this is a demo workspace — simulate outbound send
+    const { data: accountRow } = await supabase
+      .from('accounts')
+      .select('is_demo')
+      .eq('id', accountId)
+      .single();
+
+    if (accountRow?.is_demo) {
+      const simId = 'sim_' + crypto.randomUUID();
+      const { data: newMsg, error: insertErr } = await supabase
+        .from('messages')
+        .insert({
+          conversation_id: conversationId,
+          sender_type: 'agent',
+          sender_id: userId,
+          content_type: message_type === 'template' ? 'template' : 'text',
+          content_text: content_text || template_name || '',
+          template_name: template_name,
+          status: 'delivered',
+          message_id: simId,
+          is_simulated: true,
+          created_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (insertErr) {
+        return NextResponse.json({ error: insertErr.message }, { status: 500 });
+      }
+
+      await supabase
+        .from('conversations')
+        .update({
+          last_message_text: content_text || template_name || '',
+          last_message_at: new Date().toISOString(),
+        })
+        .eq('id', conversationId);
+
+      return NextResponse.json({
+        success: true,
+        message_id: newMsg.id,
+        whatsapp_message_id: simId,
+        simulated: true,
+      });
+    }
+
     // Delegate to the shared send core (validates, sends to Meta with
     // phone-variant retry, persists, pauses active flow runs). Its
     // `SendMessageError` carries a machine code + HTTP status; the

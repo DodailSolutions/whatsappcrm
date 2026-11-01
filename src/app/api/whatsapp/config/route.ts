@@ -139,6 +139,35 @@ export async function GET() {
     }
 
     if (!config) {
+      const { data: acc } = await supabase
+        .from('accounts')
+        .select('is_demo, name')
+        .eq('id', accountId)
+        .maybeSingle()
+
+      if (acc?.is_demo) {
+        return NextResponse.json(
+          {
+            connected: true,
+            is_demo: true,
+            phone_info: {
+              id: "demo-phone-id",
+              display_phone_number: "+1 (555) 019-2834",
+              verified_name: `${acc.name || 'Dodail'} (Simulated)`,
+              quality_rating: "GREEN",
+              code_verification_status: "VERIFIED",
+            },
+            waba_subscription: {
+              checked: true,
+              subscribed: true,
+              app_id_match: true,
+            },
+            message: "Connected in Simulated Demo Mode. Meta Cloud API calls are simulated locally.",
+          },
+          { status: 200 }
+        )
+      }
+
       return NextResponse.json(
         {
           connected: false,

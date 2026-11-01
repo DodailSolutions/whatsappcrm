@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { useTotalUnread } from "@/hooks/use-total-unread";
@@ -18,6 +18,7 @@ import {
   Radio,
   Settings,
   Shield,
+  Sparkles,
   User,
   UserCog,
   Users,
@@ -28,6 +29,7 @@ import {
 } from "lucide-react";
 import type { AccountRole } from "@/lib/auth/roles";
 import { BrandLockup } from "@/components/layout/brand-logo";
+import { WorkspaceSwitcher } from "@/components/layout/workspace-switcher";
 
 // Per-role chip metadata used in the sidebar's account strip + the
 // Members tab roster. Keeping this near both consumers in a single
@@ -117,7 +119,22 @@ import { useTranslations } from "next-intl";
 export function Sidebar({ open = false, onClose }: SidebarProps) {
   const t = useTranslations("Sidebar");
   const pathname = usePathname();
-  const { profile, profileLoading, account, accountRole, signOut } = useAuth();
+  const { profile, profileLoading, account, accountRole, signOut, isDemo } = useAuth();
+  const [demoSwitching, setDemoSwitching] = useState(false);
+
+  const handleEnterDemo = async () => {
+    setDemoSwitching(true);
+    try {
+      const res = await fetch("/api/demo/enter", { method: "POST" });
+      if (res.ok) {
+        window.location.reload();
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setDemoSwitching(false);
+    }
+  };
   const totalUnread = useTotalUnread();
   const unreadNotifications = useUnreadNotifications();
   // Only surface the account-name strip when it actually carries
@@ -203,6 +220,11 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
           >
             <X className="h-5 w-5" />
           </button>
+        </div>
+
+        {/* Workspace Switcher */}
+        <div className="px-3 pt-3 pb-1">
+          <WorkspaceSwitcher />
         </div>
 
         {/* Main navigation */}
@@ -386,6 +408,16 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
                 <Settings className="size-4" />
                 {t("menuSettings")}
               </DropdownMenuItem>
+              {!isDemo && (
+                <DropdownMenuItem
+                  onClick={handleEnterDemo}
+                  disabled={demoSwitching}
+                  className="text-primary focus:bg-primary/10 focus:text-primary cursor-pointer"
+                >
+                  <Sparkles className={`size-4 ${demoSwitching ? "animate-spin" : ""}`} />
+                  {demoSwitching ? "Loading Demo..." : "Explore Demo Mode"}
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator className="bg-border" />
               <DropdownMenuItem
                 onClick={signOut}
