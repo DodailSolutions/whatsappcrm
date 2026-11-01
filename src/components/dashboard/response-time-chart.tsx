@@ -102,9 +102,9 @@ export function ResponseTimeChart({
             data={chartData}
             index="day"
             categories={[category]}
-            // 'violet' maps to Tailwind's `fill-violet-500` — matches
-            // the brand accent the hand-rolled bars used (#7c3aed).
-            colors={['violet']}
+            // 'primary' maps to `fill-primary` so the bars follow the
+            // active accent theme (Dodail orange by default).
+            colors={['primary']}
             valueFormatter={(value) => `${value.toFixed(1)}m`}
             showLegend={false}
             yAxisWidth={48}

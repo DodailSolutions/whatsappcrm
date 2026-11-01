@@ -88,32 +88,32 @@
 
 :root,
 html[data-mode="dark"] {
-  --background: oklch(0.13 0.01 260);
+  --background: oklch(0.13 0.025 252);
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.18 0.01 260);
-  --card-2: oklch(0.205 0.01 260);
+  --card: oklch(0.18 0.025 252);
+  --card-2: oklch(0.205 0.025 252);
   --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.18 0.01 260);
+  --popover: oklch(0.18 0.025 252);
   --popover-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.22 0.01 260);
+  --secondary: oklch(0.22 0.025 252);
   --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.22 0.01 260);
-  --muted-foreground: oklch(0.65 0.01 260);
-  --accent: oklch(0.22 0.01 260);
+  --muted: oklch(0.22 0.025 252);
+  --muted-foreground: oklch(0.7 0.02 252);
+  --accent: oklch(0.22 0.025 252);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.28 0.01 260);
-  --input: oklch(0.28 0.01 260);
+  --border: oklch(0.28 0.025 252);
+  --input: oklch(0.28 0.025 252);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
   --radius: 0.625rem;
-  --sidebar: oklch(0.16 0.01 260);
+  --sidebar: oklch(0.16 0.025 252);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.22 0.01 260);
+  --sidebar-accent: oklch(0.22 0.025 252);
   --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.28 0.01 260);
+  --sidebar-border: oklch(0.28 0.025 252);
 }
 
 html[data-mode="light"] {
@@ -147,7 +147,22 @@ html[data-mode="light"] {
 
 /* ---- ACCENT: primary color ---- */
 
+/* Dodail brand: orange (#F15A22) accent, navy (#0D1B2A) ink. */
 :root,
+html[data-theme="dodail"] {
+  --primary: oklch(0.665 0.195 40);
+  --primary-foreground: oklch(0.99 0 0);
+  --primary-hover: oklch(0.71 0.18 42);
+  --primary-soft: oklch(0.665 0.195 40 / 0.12);
+  --primary-soft-2: oklch(0.665 0.195 40 / 0.22);
+  --ring: oklch(0.665 0.195 40);
+  --chart-1: oklch(0.665 0.195 40);
+  --chart-2: oklch(0.62 0.12 245);
+  --sidebar-primary: oklch(0.665 0.195 40);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-ring: oklch(0.665 0.195 40);
+}
+
 html[data-theme="violet"] {
   --primary: oklch(0.526 0.247 293);
   --primary-foreground: oklch(0.985 0 0);
@@ -227,4 +242,15 @@ html[data-theme="rose"] {
   html {
     @apply font-sans;
   }
+}
+
+/* Branded backdrop for the signed-out screens (login, signup, invites):
+   a soft orange glow top-left and a navy wash bottom-right over the
+   regular background, so the auth card doesn't float on a flat void. */
+@utility auth-backdrop {
+  background-color: var(--background);
+  background-image:
+    radial-gradient(60rem 40rem at -10% -20%, var(--primary-soft-2), transparent 60%),
+    radial-gradient(50rem 40rem at 110% 120%, oklch(0.45 0.08 252 / 0.18), transparent 60%);
+  background-attachment: fixed;
 }

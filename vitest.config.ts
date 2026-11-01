@@ -1,9 +1,12 @@
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   resolve: {
     tsconfigPaths: true,
-    alias: { "@app-messages": new URL("./messages/en.json", import.meta.url).pathname },
+    // fileURLToPath (not URL#pathname) so checkouts whose path contains
+    // spaces or non-ASCII characters resolve instead of 404ing on %20.
+    alias: { "@app-messages": fileURLToPath(new URL("./messages/en.json", import.meta.url)) },
   },
   test: {
     environment: "node",
