@@ -613,70 +613,227 @@ export default function SuperAdminPage() {
             </Button>
           </div>
 
-          <Card className="border-border/80 shadow-2xs p-5 space-y-4">
-            <div className="flex items-center justify-between border-b border-border/80 pb-3">
-              <div>
-                <div className="font-semibold text-foreground text-sm">Sandbox / Test Mode</div>
-                <div className="text-xs text-muted-foreground">Process simulated subscription charges</div>
+          <div className="space-y-4">
+            {/* Global Mode */}
+            <Card className="border-border/80 shadow-2xs p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-bold text-foreground text-sm">Sandbox / Test Mode</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">
+                    When enabled, mock checkouts will run without charging real payment methods.
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={settings.payment_gateway_config?.sandbox_mode}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      payment_gateway_config: {
+                        ...settings.payment_gateway_config,
+                        sandbox_mode: e.target.checked,
+                      },
+                    })
+                  }
+                  className="size-4.5 accent-[#F15A22] cursor-pointer"
+                />
               </div>
-              <input
-                type="checkbox"
-                checked={settings.payment_gateway_config?.sandbox_mode}
-                onChange={(e) =>
-                  setSettings({
-                    ...settings,
-                    payment_gateway_config: {
-                      ...settings.payment_gateway_config,
-                      sandbox_mode: e.target.checked,
-                    },
-                  })
-                }
-                className="size-4"
-              />
-            </div>
+            </Card>
 
-            <div className="flex items-center justify-between border-b border-border/80 pb-3">
-              <div>
-                <div className="font-semibold text-foreground text-sm">Razorpay (India UPI / Cards)</div>
-                <div className="text-xs text-muted-foreground">Enable domestic subscription checkouts</div>
+            {/* Razorpay Card */}
+            <Card className="border-border/80 shadow-2xs p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-border/80 pb-3">
+                <div>
+                  <div className="font-bold text-foreground text-sm flex items-center gap-2">
+                    <span>Razorpay Integration</span>
+                    <Badge variant="outline" className="text-[10px] text-blue-700 bg-blue-500/10 border-blue-500/30">
+                      India (UPI, RuPay, NetBanking, Cards)
+                    </Badge>
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-0.5">
+                    Accept recurring subscriptions and payments via Razorpay Subscriptions API.
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={settings.payment_gateway_config?.razorpay_enabled}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      payment_gateway_config: {
+                        ...settings.payment_gateway_config,
+                        razorpay_enabled: e.target.checked,
+                      },
+                    })
+                  }
+                  className="size-4.5 accent-[#F15A22] cursor-pointer"
+                />
               </div>
-              <input
-                type="checkbox"
-                checked={settings.payment_gateway_config?.razorpay_enabled}
-                onChange={(e) =>
-                  setSettings({
-                    ...settings,
-                    payment_gateway_config: {
-                      ...settings.payment_gateway_config,
-                      razorpay_enabled: e.target.checked,
-                    },
-                  })
-                }
-                className="size-4"
-              />
-            </div>
 
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-semibold text-foreground text-sm">Stripe (International Cards)</div>
-                <div className="text-xs text-muted-foreground">Enable global multi-currency billing</div>
+              {settings.payment_gateway_config?.razorpay_enabled && (
+                <div className="space-y-3 pt-1">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs font-semibold">Razorpay Key ID</Label>
+                      <Input
+                        placeholder="rzp_test_... or rzp_live_..."
+                        value={settings.payment_gateway_config?.razorpay_key_id || ""}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            payment_gateway_config: {
+                              ...settings.payment_gateway_config,
+                              razorpay_key_id: e.target.value,
+                            },
+                          })
+                        }
+                        className="text-xs font-mono h-9"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs font-semibold">Razorpay Key Secret</Label>
+                      <Input
+                        type="password"
+                        placeholder="••••••••••••••••"
+                        value={settings.payment_gateway_config?.razorpay_key_secret || ""}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            payment_gateway_config: {
+                              ...settings.payment_gateway_config,
+                              razorpay_key_secret: e.target.value,
+                            },
+                          })
+                        }
+                        className="text-xs font-mono h-9"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg bg-muted/40 border border-border p-3 text-xs space-y-1">
+                    <span className="font-semibold text-foreground">Razorpay Webhook Endpoint</span>
+                    <p className="text-muted-foreground text-[11px]">
+                      Paste this URL into your Razorpay Dashboard → Settings → Webhooks (Events: <code>subscription.charged</code>, <code>payment.captured</code>):
+                    </p>
+                    <div className="flex items-center gap-2 pt-1">
+                      <code className="text-xs font-mono bg-background border border-border px-2 py-1 rounded flex-1 select-all">
+                        {typeof window !== "undefined" ? `${window.location.origin}/api/billing/webhook/razorpay` : "/api/billing/webhook/razorpay"}
+                      </code>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          const url = `${window.location.origin}/api/billing/webhook/razorpay`;
+                          navigator.clipboard.writeText(url);
+                          toast.success("Razorpay webhook URL copied!");
+                        }}
+                        className="h-7 text-xs"
+                      >
+                        Copy
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </Card>
+
+            {/* Stripe Card */}
+            <Card className="border-border/80 shadow-2xs p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-border/80 pb-3">
+                <div>
+                  <div className="font-bold text-foreground text-sm flex items-center gap-2">
+                    <span>Stripe Integration</span>
+                    <Badge variant="outline" className="text-[10px] text-purple-700 bg-purple-500/10 border-purple-500/30">
+                      Global (USD, EUR, GBP, Multi-Currency Cards)
+                    </Badge>
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-0.5">
+                    Accept global subscriptions with Stripe Billing and Customer Portal.
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={settings.payment_gateway_config?.stripe_enabled}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      payment_gateway_config: {
+                        ...settings.payment_gateway_config,
+                        stripe_enabled: e.target.checked,
+                      },
+                    })
+                  }
+                  className="size-4.5 accent-[#F15A22] cursor-pointer"
+                />
               </div>
-              <input
-                type="checkbox"
-                checked={settings.payment_gateway_config?.stripe_enabled}
-                onChange={(e) =>
-                  setSettings({
-                    ...settings,
-                    payment_gateway_config: {
-                      ...settings.payment_gateway_config,
-                      stripe_enabled: e.target.checked,
-                    },
-                  })
-                }
-                className="size-4"
-              />
-            </div>
-          </Card>
+
+              {settings.payment_gateway_config?.stripe_enabled && (
+                <div className="space-y-3 pt-1">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs font-semibold">Stripe Publishable Key</Label>
+                      <Input
+                        placeholder="pk_test_... or pk_live_..."
+                        value={settings.payment_gateway_config?.stripe_publishable_key || ""}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            payment_gateway_config: {
+                              ...settings.payment_gateway_config,
+                              stripe_publishable_key: e.target.value,
+                            },
+                          })
+                        }
+                        className="text-xs font-mono h-9"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs font-semibold">Stripe Secret Key</Label>
+                      <Input
+                        type="password"
+                        placeholder="sk_test_... or sk_live_..."
+                        value={settings.payment_gateway_config?.stripe_secret_key || ""}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            payment_gateway_config: {
+                              ...settings.payment_gateway_config,
+                              stripe_secret_key: e.target.value,
+                            },
+                          })
+                        }
+                        className="text-xs font-mono h-9"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg bg-muted/40 border border-border p-3 text-xs space-y-1">
+                    <span className="font-semibold text-foreground">Stripe Webhook Endpoint</span>
+                    <p className="text-muted-foreground text-[11px]">
+                      Paste this URL into Stripe Dashboard → Developers → Webhooks (Events: <code>customer.subscription.created</code>, <code>invoice.paid</code>):
+                    </p>
+                    <div className="flex items-center gap-2 pt-1">
+                      <code className="text-xs font-mono bg-background border border-border px-2 py-1 rounded flex-1 select-all">
+                        {typeof window !== "undefined" ? `${window.location.origin}/api/billing/webhook/stripe` : "/api/billing/webhook/stripe"}
+                      </code>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          const url = `${window.location.origin}/api/billing/webhook/stripe`;
+                          navigator.clipboard.writeText(url);
+                          toast.success("Stripe webhook URL copied!");
+                        }}
+                        className="h-7 text-xs"
+                      >
+                        Copy
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </Card>
+          </div>
         </div>
       )}
 
