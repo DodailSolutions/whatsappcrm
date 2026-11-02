@@ -12,6 +12,7 @@ import {
   Bot,
   Crown,
   GitBranch,
+  Globe,
   LayoutDashboard,
   LogOut,
   Megaphone,
@@ -113,6 +114,7 @@ const navItems: NavItem[] = [
 
 const bottomNavItems = [
   { href: "/super-admin", labelKey: "superAdmin", icon: ShieldCheck },
+  { href: "/website", labelKey: "websiteCms", icon: Globe },
   { href: "/settings", labelKey: "settings", icon: Settings },
 ];
 

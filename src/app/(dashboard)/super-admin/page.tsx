@@ -1,39 +1,30 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
-import { DEFAULT_LANDING_CMS, type LandingPageCMS, type CaseStudyItem } from "@/lib/cms/default-landing-cms";
+import { DEFAULT_LANDING_CMS, type LandingPageCMS } from "@/lib/cms/default-landing-cms";
 import {
   ShieldCheck,
   Building2,
   Users,
-  MessageSquare,
   CreditCard,
-  Settings,
   Globe,
   Sliders,
   CheckCircle2,
-  AlertTriangle,
-  Lock,
   PauseCircle,
   PlayCircle,
   RefreshCw,
-  Sparkles,
-  Plus,
-  Trash2,
-  Star,
-  Layers,
-  HelpCircle,
+  ArrowRight,
+  ExternalLink,
 } from "lucide-react";
 
 export default function SuperAdminPage() {
   const [activeTab, setActiveTab] = useState<"overview" | "workspaces" | "plans" | "gateways" | "cms">("overview");
-  const [cmsSubTab, setCmsSubTab] = useState<"hero" | "stats" | "case_studies" | "sections" | "faqs" | "footer">("hero");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -70,62 +61,16 @@ export default function SuperAdminPage() {
         setMetrics(data.metrics || {});
         setWorkspaces(data.workspaces || []);
         if (data.settings) {
-          const rawCms = data.settings.landing_page_cms || {};
           setSettings({
             payment_gateway_config: data.settings.payment_gateway_config || {
               razorpay_enabled: true,
               stripe_enabled: true,
               sandbox_mode: true,
             },
-            plan_pricing: data.settings.plan_pricing || {
-              starter: { name: "Starter", monthly_inr: 1999, max_contacts: 1000, max_members: 2, max_locations: 1 },
-              growth: { name: "Growth", monthly_inr: 4999, max_contacts: 5000, max_members: 5, max_locations: 2 },
-              pro: { name: "Pro Business", monthly_inr: 9999, max_contacts: 25000, max_members: 15, max_locations: 5 },
-              enterprise: { name: "Enterprise", monthly_inr: 24999, max_contacts: 100000, max_members: 50, max_locations: 20 },
-            },
+            plan_pricing: data.settings.plan_pricing || settings.plan_pricing,
             landing_page_cms: {
               ...DEFAULT_LANDING_CMS,
-              ...rawCms,
-              hero: {
-                ...DEFAULT_LANDING_CMS.hero,
-                ...(rawCms.hero || {}),
-                // backward compat
-                headline: rawCms.hero?.headline || rawCms.hero_headline || DEFAULT_LANDING_CMS.hero.headline,
-                subheadline: rawCms.hero?.subheadline || rawCms.hero_subheadline || DEFAULT_LANDING_CMS.hero.subheadline,
-                primary_cta_text: rawCms.hero?.primary_cta_text || rawCms.cta_text || DEFAULT_LANDING_CMS.hero.primary_cta_text,
-                secondary_cta_text: rawCms.hero?.secondary_cta_text || rawCms.secondary_cta || DEFAULT_LANDING_CMS.hero.secondary_cta_text,
-              },
-              stats: rawCms.stats?.length ? rawCms.stats : DEFAULT_LANDING_CMS.stats,
-              industries_section: {
-                ...DEFAULT_LANDING_CMS.industries_section,
-                ...(rawCms.industries_section || {}),
-              },
-              catalog_section: {
-                ...DEFAULT_LANDING_CMS.catalog_section,
-                ...(rawCms.catalog_section || {}),
-              },
-              case_studies_section: {
-                ...DEFAULT_LANDING_CMS.case_studies_section,
-                ...(rawCms.case_studies_section || {}),
-                items: rawCms.case_studies_section?.items?.length
-                  ? rawCms.case_studies_section.items
-                  : DEFAULT_LANDING_CMS.case_studies_section.items,
-              },
-              pricing_section: {
-                ...DEFAULT_LANDING_CMS.pricing_section,
-                ...(rawCms.pricing_section || {}),
-              },
-              faqs_section: {
-                ...DEFAULT_LANDING_CMS.faqs_section,
-                ...(rawCms.faqs_section || {}),
-                items: rawCms.faqs_section?.items?.length
-                  ? rawCms.faqs_section.items
-                  : DEFAULT_LANDING_CMS.faqs_section.items,
-              },
-              footer: {
-                ...DEFAULT_LANDING_CMS.footer,
-                ...(rawCms.footer || {}),
-              },
+              ...(data.settings.landing_page_cms || {}),
             },
           });
         }
@@ -168,25 +113,14 @@ export default function SuperAdminPage() {
         body: JSON.stringify(settings),
       });
       if (res.ok) {
-        alert("Platform settings & CMS saved successfully!");
-      } else {
-        const data = await res.json().catch(() => null);
-        alert(`Error saving settings: ${data?.error || "Unknown error"}`);
+        alert("Platform settings saved successfully!");
       }
     } catch (err) {
       console.error(err);
-      alert("Failed to save platform settings.");
+      alert("Failed to save settings.");
     } finally {
       setSaving(false);
     }
-  };
-
-  // Helper updaters for LandingPageCMS
-  const updateCms = (updater: (prev: LandingPageCMS) => LandingPageCMS) => {
-    setSettings((prev) => ({
-      ...prev,
-      landing_page_cms: updater(prev.landing_page_cms),
-    }));
   };
 
   return (
@@ -521,782 +455,53 @@ export default function SuperAdminPage() {
         </div>
       )}
 
-      {/* TAB 5: CMS & COMPLETE LANDING PAGE EDITOR */}
+      {/* TAB 5: CMS & DEDICATED WEBSITE BUILDER */}
       {activeTab === "cms" && (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-bold text-foreground">Marketing Landing Page CMS</h2>
-              <p className="text-xs text-muted-foreground">
-                Edit every headline, stat counter, industry heading, case study, and FAQ displayed on the public landing page.
-              </p>
-            </div>
-            <Button size="sm" onClick={handleSaveSettings} disabled={saving} className="text-xs font-semibold">
-              {saving ? "Saving CMS..." : "Save All CMS Changes"}
-            </Button>
-          </div>
-
-          {/* CMS Sub-Tabs Navigation */}
-          <div className="flex flex-wrap gap-2 border-b border-border pb-3">
-            {[
-              { id: "hero", label: "Hero & CTAs", icon: Sparkles },
-              { id: "stats", label: "Live Stats Bar", icon: CheckCircle2 },
-              { id: "case_studies", label: "Case Studies (4+)", icon: Star },
-              { id: "sections", label: "Section Titles", icon: Layers },
-              { id: "faqs", label: "FAQs List", icon: HelpCircle },
-              { id: "footer", label: "Footer Info", icon: Globe },
-            ].map((sub) => {
-              const Icon = sub.icon;
-              const isCur = cmsSubTab === sub.id;
-              return (
-                <button
-                  key={sub.id}
-                  onClick={() => setCmsSubTab(sub.id as any)}
-                  className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
-                    isCur
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "bg-muted/60 text-muted-foreground hover:bg-muted"
-                  }`}
-                >
-                  <Icon className="size-3.5" />
-                  <span>{sub.label}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* SUB-SECTION 1: HERO */}
-          {cmsSubTab === "hero" && (
-            <Card className="border-border bg-card p-5 space-y-4 max-w-3xl">
-              <div>
-                <Label className="text-xs font-semibold">Badge Text</Label>
-                <Input
-                  value={settings.landing_page_cms.hero?.badge || ""}
-                  onChange={(e) =>
-                    updateCms((c) => ({
-                      ...c,
-                      hero: { ...c.hero, badge: e.target.value },
-                    }))
-                  }
-                  className="mt-1 h-9"
-                  placeholder="e.g. Official Meta Cloud API • Multi-Tenant SaaS"
-                />
+        <div className="space-y-6 max-w-4xl">
+          <div className="rounded-2xl border border-orange-500/20 bg-gradient-to-r from-orange-500/10 via-amber-500/5 to-transparent p-6 space-y-4">
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-1">
+                <Badge className="bg-[#F15A22] text-white text-xs font-bold">
+                  Dedicated Website CMS
+                </Badge>
+                <h2 className="text-xl font-extrabold text-foreground tracking-tight">
+                  Visual Landing Page Editor & PWA Studio
+                </h2>
+                <p className="text-xs text-muted-foreground max-w-xl">
+                  Edit every headline, stat counter, industry card, platform feature, and FAQ with live device previews (Desktop, Tablet, Mobile), draft versions, and instant publishing.
+                </p>
               </div>
 
-              <div>
-                <Label className="text-xs font-semibold">Main Hero Headline</Label>
-                <Input
-                  value={settings.landing_page_cms.hero?.headline || ""}
-                  onChange={(e) =>
-                    updateCms((c) => ({
-                      ...c,
-                      hero: { ...c.hero, headline: e.target.value },
-                    }))
-                  }
-                  className="mt-1 h-9 font-semibold"
-                />
-              </div>
-
-              <div>
-                <Label className="text-xs font-semibold">Hero Subheadline</Label>
-                <Textarea
-                  value={settings.landing_page_cms.hero?.subheadline || ""}
-                  onChange={(e) =>
-                    updateCms((c) => ({
-                      ...c,
-                      hero: { ...c.hero, subheadline: e.target.value },
-                    }))
-                  }
-                  className="mt-1 text-xs"
-                  rows={3}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-xs font-semibold">Primary CTA Button Text</Label>
-                  <Input
-                    value={settings.landing_page_cms.hero?.primary_cta_text || ""}
-                    onChange={(e) =>
-                      updateCms((c) => ({
-                        ...c,
-                        hero: { ...c.hero, primary_cta_text: e.target.value },
-                      }))
-                    }
-                    className="mt-1 h-9"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs font-semibold">Primary CTA Target URL</Label>
-                  <Input
-                    value={settings.landing_page_cms.hero?.primary_cta_url || ""}
-                    onChange={(e) =>
-                      updateCms((c) => ({
-                        ...c,
-                        hero: { ...c.hero, primary_cta_url: e.target.value },
-                      }))
-                    }
-                    className="mt-1 h-9"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-xs font-semibold">Secondary CTA Button Text</Label>
-                  <Input
-                    value={settings.landing_page_cms.hero?.secondary_cta_text || ""}
-                    onChange={(e) =>
-                      updateCms((c) => ({
-                        ...c,
-                        hero: { ...c.hero, secondary_cta_text: e.target.value },
-                      }))
-                    }
-                    className="mt-1 h-9"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs font-semibold">Secondary CTA Target URL</Label>
-                  <Input
-                    value={settings.landing_page_cms.hero?.secondary_cta_url || ""}
-                    onChange={(e) =>
-                      updateCms((c) => ({
-                        ...c,
-                        hero: { ...c.hero, secondary_cta_url: e.target.value },
-                      }))
-                    }
-                    className="mt-1 h-9"
-                  />
-                </div>
-              </div>
-            </Card>
-          )}
-
-          {/* SUB-SECTION 2: STATS */}
-          {cmsSubTab === "stats" && (
-            <Card className="border-border bg-card p-5 space-y-4 max-w-3xl">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-bold text-foreground">Hero Proof Metric Counters</h3>
-                  <p className="text-xs text-muted-foreground">High-impact numbers showcased directly below the hero buttons.</p>
-                </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() =>
-                    updateCms((c) => ({
-                      ...c,
-                      stats: [...c.stats, { value: "99%", label: "New Verified Metric" }],
-                    }))
-                  }
-                  className="text-xs"
-                >
-                  <Plus className="mr-1 size-3.5" /> Add Stat
+              <Link href="/website">
+                <Button className="h-10 px-5 text-xs font-bold bg-[#F15A22] hover:bg-[#d94a15] text-white shadow-sm shrink-0">
+                  Open Site Builder
+                  <ArrowRight className="ml-1.5 size-3.5" />
                 </Button>
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+              <div className="rounded-xl border border-border bg-card p-3.5 space-y-1">
+                <span className="text-[10px] uppercase font-bold text-muted-foreground">Live Headline</span>
+                <p className="text-xs font-bold text-foreground truncate">
+                  {settings.landing_page_cms.hero.headline_line1} {settings.landing_page_cms.hero.headline_highlight}
+                </p>
               </div>
-
-              <div className="space-y-3">
-                {settings.landing_page_cms.stats.map((st, idx) => (
-                  <div key={idx} className="flex items-center gap-3 rounded-lg border border-border p-3 bg-muted/20">
-                    <div className="w-1/3">
-                      <Label className="text-[10px] text-muted-foreground uppercase font-bold">Metric Value</Label>
-                      <Input
-                        value={st.value}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          updateCms((c) => {
-                            const next = [...c.stats];
-                            next[idx] = { ...next[idx], value: val };
-                            return { ...c, stats: next };
-                          });
-                        }}
-                        className="mt-1 h-8 text-xs font-bold text-primary"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <Label className="text-[10px] text-muted-foreground uppercase font-bold">Label Description</Label>
-                      <Input
-                        value={st.label}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          updateCms((c) => {
-                            const next = [...c.stats];
-                            next[idx] = { ...next[idx], label: val };
-                            return { ...c, stats: next };
-                          });
-                        }}
-                        className="mt-1 h-8 text-xs"
-                      />
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() =>
-                        updateCms((c) => ({
-                          ...c,
-                          stats: c.stats.filter((_, i) => i !== idx),
-                        }))
-                      }
-                      className="mt-4 text-destructive hover:bg-destructive/10"
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
-                  </div>
-                ))}
+              <div className="rounded-xl border border-border bg-card p-3.5 space-y-1">
+                <span className="text-[10px] uppercase font-bold text-muted-foreground">SEO Title</span>
+                <p className="text-xs font-bold text-foreground truncate">
+                  {settings.landing_page_cms.seo.meta_title}
+                </p>
               </div>
-            </Card>
-          )}
-
-          {/* SUB-SECTION 3: CASE STUDIES */}
-          {cmsSubTab === "case_studies" && (
-            <div className="space-y-5 max-w-4xl">
-              <Card className="border-border bg-card p-5 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-bold text-foreground">Case Studies Section Headings</h3>
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      const newId = `cs-${Date.now()}`;
-                      const newCS: CaseStudyItem = {
-                        id: newId,
-                        business_name: "New Enterprise Client",
-                        industry: "Digital Marketing Agency",
-                        metric_badge: "+250% Growth",
-                        title: "How Client Scaled WhatsApp Automation",
-                        story: "Describe the initial operational challenge and how Dodail resolved it.",
-                        quote: "Dodail transformed our customer engagement on WhatsApp within weeks.",
-                        author: "Client Founder",
-                        author_role: "CEO & Founder",
-                      };
-                      updateCms((c) => ({
-                        ...c,
-                        case_studies_section: {
-                          ...c.case_studies_section,
-                          items: [newCS, ...c.case_studies_section.items],
-                        },
-                      }));
-                    }}
-                    className="text-xs"
-                  >
-                    <Plus className="mr-1 size-3.5" /> Add Case Study
-                  </Button>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
-                    <Label className="text-xs">Badge</Label>
-                    <Input
-                      value={settings.landing_page_cms.case_studies_section?.badge || ""}
-                      onChange={(e) =>
-                        updateCms((c) => ({
-                          ...c,
-                          case_studies_section: { ...c.case_studies_section, badge: e.target.value },
-                        }))
-                      }
-                      className="mt-1 h-9"
-                    />
-                  </div>
-                  <div className="sm:col-span-2">
-                    <Label className="text-xs">Section Title</Label>
-                    <Input
-                      value={settings.landing_page_cms.case_studies_section?.title || ""}
-                      onChange={(e) =>
-                        updateCms((c) => ({
-                          ...c,
-                          case_studies_section: { ...c.case_studies_section, title: e.target.value },
-                        }))
-                      }
-                      className="mt-1 h-9 font-semibold"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label className="text-xs">Section Subtitle</Label>
-                  <Input
-                    value={settings.landing_page_cms.case_studies_section?.subtitle || ""}
-                    onChange={(e) =>
-                      updateCms((c) => ({
-                        ...c,
-                        case_studies_section: { ...c.case_studies_section, subtitle: e.target.value },
-                      }))
-                    }
-                    className="mt-1 h-9"
-                  />
-                </div>
-              </Card>
-
-              {/* Individual Case Study Cards */}
-              <div className="space-y-4">
-                {settings.landing_page_cms.case_studies_section.items.map((cs, idx) => (
-                  <Card key={cs.id} className="border-border bg-card p-5 space-y-4">
-                    <div className="flex items-center justify-between border-b border-border pb-3">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-xs font-bold text-primary">
-                          #{idx + 1}
-                        </Badge>
-                        <span className="font-bold text-sm text-foreground">{cs.business_name || "Untitled Case Study"}</span>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() =>
-                          updateCms((c) => ({
-                            ...c,
-                            case_studies_section: {
-                              ...c.case_studies_section,
-                              items: c.case_studies_section.items.filter((item) => item.id !== cs.id),
-                            },
-                          }))
-                        }
-                        className="text-xs text-destructive hover:bg-destructive/10"
-                      >
-                        <Trash2 className="mr-1 size-3.5" /> Remove
-                      </Button>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <div>
-                        <Label className="text-xs">Business Name</Label>
-                        <Input
-                          value={cs.business_name}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            updateCms((c) => {
-                              const next = [...c.case_studies_section.items];
-                              next[idx] = { ...next[idx], business_name: val };
-                              return { ...c, case_studies_section: { ...c.case_studies_section, items: next } };
-                            });
-                          }}
-                          className="mt-1 h-8 text-xs"
-                        />
-                      </div>
-
-                      <div>
-                        <Label className="text-xs">Industry Category</Label>
-                        <Input
-                          value={cs.industry}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            updateCms((c) => {
-                              const next = [...c.case_studies_section.items];
-                              next[idx] = { ...next[idx], industry: val };
-                              return { ...c, case_studies_section: { ...c.case_studies_section, items: next } };
-                            });
-                          }}
-                          className="mt-1 h-8 text-xs"
-                        />
-                      </div>
-
-                      <div>
-                        <Label className="text-xs">Metric Highlight Badge</Label>
-                        <Input
-                          value={cs.metric_badge}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            updateCms((c) => {
-                              const next = [...c.case_studies_section.items];
-                              next[idx] = { ...next[idx], metric_badge: val };
-                              return { ...c, case_studies_section: { ...c.case_studies_section, items: next } };
-                            });
-                          }}
-                          className="mt-1 h-8 text-xs font-bold text-primary"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label className="text-xs">Case Study Title</Label>
-                      <Input
-                        value={cs.title}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          updateCms((c) => {
-                            const next = [...c.case_studies_section.items];
-                            next[idx] = { ...next[idx], title: val };
-                            return { ...c, case_studies_section: { ...c.case_studies_section, items: next } };
-                          });
-                        }}
-                        className="mt-1 h-8 text-xs font-semibold"
-                      />
-                    </div>
-
-                    <div>
-                      <Label className="text-xs">Problem & Transformation Story</Label>
-                      <Textarea
-                        value={cs.story}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          updateCms((c) => {
-                            const next = [...c.case_studies_section.items];
-                            next[idx] = { ...next[idx], story: val };
-                            return { ...c, case_studies_section: { ...c.case_studies_section, items: next } };
-                          });
-                        }}
-                        className="mt-1 text-xs"
-                        rows={2}
-                      />
-                    </div>
-
-                    <div>
-                      <Label className="text-xs">Customer Testimonial Quote</Label>
-                      <Textarea
-                        value={cs.quote}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          updateCms((c) => {
-                            const next = [...c.case_studies_section.items];
-                            next[idx] = { ...next[idx], quote: val };
-                            return { ...c, case_studies_section: { ...c.case_studies_section, items: next } };
-                          });
-                        }}
-                        className="mt-1 text-xs italic"
-                        rows={2}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <Label className="text-xs">Author Name</Label>
-                        <Input
-                          value={cs.author}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            updateCms((c) => {
-                              const next = [...c.case_studies_section.items];
-                              next[idx] = { ...next[idx], author: val };
-                              return { ...c, case_studies_section: { ...c.case_studies_section, items: next } };
-                            });
-                          }}
-                          className="mt-1 h-8 text-xs"
-                        />
-                      </div>
-
-                      <div>
-                        <Label className="text-xs">Author Role / Designation</Label>
-                        <Input
-                          value={cs.author_role}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            updateCms((c) => {
-                              const next = [...c.case_studies_section.items];
-                              next[idx] = { ...next[idx], author_role: val };
-                              return { ...c, case_studies_section: { ...c.case_studies_section, items: next } };
-                            });
-                          }}
-                          className="mt-1 h-8 text-xs"
-                        />
-                      </div>
-                    </div>
-                  </Card>
-                ))}
+              <div className="rounded-xl border border-border bg-card p-3.5 space-y-1">
+                <span className="text-[10px] uppercase font-bold text-muted-foreground">Public Website</span>
+                <Link href="/" target="_blank" className="flex items-center gap-1 text-xs font-bold text-[#F15A22] hover:underline">
+                  <span>View Live Site</span>
+                  <ExternalLink className="size-3" />
+                </Link>
               </div>
             </div>
-          )}
-
-          {/* SUB-SECTION 4: SECTION TITLES (INDUSTRIES, CATALOG, PRICING) */}
-          {cmsSubTab === "sections" && (
-            <Card className="border-border bg-card p-5 space-y-6 max-w-3xl">
-              {/* Industries Section */}
-              <div className="space-y-3 border-b border-border pb-5">
-                <h3 className="text-sm font-bold text-foreground">All 16 Industries Section Copy</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
-                    <Label className="text-xs">Badge</Label>
-                    <Input
-                      value={settings.landing_page_cms.industries_section?.badge || ""}
-                      onChange={(e) =>
-                        updateCms((c) => ({
-                          ...c,
-                          industries_section: { ...c.industries_section, badge: e.target.value },
-                        }))
-                      }
-                      className="mt-1 h-8 text-xs"
-                    />
-                  </div>
-                  <div className="sm:col-span-2">
-                    <Label className="text-xs">Title</Label>
-                    <Input
-                      value={settings.landing_page_cms.industries_section?.title || ""}
-                      onChange={(e) =>
-                        updateCms((c) => ({
-                          ...c,
-                          industries_section: { ...c.industries_section, title: e.target.value },
-                        }))
-                      }
-                      className="mt-1 h-8 text-xs font-semibold"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-xs">Subtitle</Label>
-                  <Input
-                    value={settings.landing_page_cms.industries_section?.subtitle || ""}
-                    onChange={(e) =>
-                      updateCms((c) => ({
-                        ...c,
-                        industries_section: { ...c.industries_section, subtitle: e.target.value },
-                      }))
-                    }
-                    className="mt-1 h-8 text-xs"
-                  />
-                </div>
-              </div>
-
-              {/* Catalog Section */}
-              <div className="space-y-3 border-b border-border pb-5">
-                <h3 className="text-sm font-bold text-foreground">Universal Business Catalog Section Copy</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
-                    <Label className="text-xs">Badge</Label>
-                    <Input
-                      value={settings.landing_page_cms.catalog_section?.badge || ""}
-                      onChange={(e) =>
-                        updateCms((c) => ({
-                          ...c,
-                          catalog_section: { ...c.catalog_section, badge: e.target.value },
-                        }))
-                      }
-                      className="mt-1 h-8 text-xs"
-                    />
-                  </div>
-                  <div className="sm:col-span-2">
-                    <Label className="text-xs">Title</Label>
-                    <Input
-                      value={settings.landing_page_cms.catalog_section?.title || ""}
-                      onChange={(e) =>
-                        updateCms((c) => ({
-                          ...c,
-                          catalog_section: { ...c.catalog_section, title: e.target.value },
-                        }))
-                      }
-                      className="mt-1 h-8 text-xs font-semibold"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-xs">Subtitle</Label>
-                  <Input
-                    value={settings.landing_page_cms.catalog_section?.subtitle || ""}
-                    onChange={(e) =>
-                      updateCms((c) => ({
-                        ...c,
-                        catalog_section: { ...c.catalog_section, subtitle: e.target.value },
-                      }))
-                    }
-                    className="mt-1 h-8 text-xs"
-                  />
-                </div>
-              </div>
-
-              {/* Pricing Section */}
-              <div className="space-y-3">
-                <h3 className="text-sm font-bold text-foreground">Pricing Section Copy</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
-                    <Label className="text-xs">Badge</Label>
-                    <Input
-                      value={settings.landing_page_cms.pricing_section?.badge || ""}
-                      onChange={(e) =>
-                        updateCms((c) => ({
-                          ...c,
-                          pricing_section: { ...c.pricing_section, badge: e.target.value },
-                        }))
-                      }
-                      className="mt-1 h-8 text-xs"
-                    />
-                  </div>
-                  <div className="sm:col-span-2">
-                    <Label className="text-xs">Title</Label>
-                    <Input
-                      value={settings.landing_page_cms.pricing_section?.title || ""}
-                      onChange={(e) =>
-                        updateCms((c) => ({
-                          ...c,
-                          pricing_section: { ...c.pricing_section, title: e.target.value },
-                        }))
-                      }
-                      className="mt-1 h-8 text-xs font-semibold"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-xs">Subtitle</Label>
-                  <Input
-                    value={settings.landing_page_cms.pricing_section?.subtitle || ""}
-                    onChange={(e) =>
-                      updateCms((c) => ({
-                        ...c,
-                        pricing_section: { ...c.pricing_section, subtitle: e.target.value },
-                      }))
-                    }
-                    className="mt-1 h-8 text-xs"
-                  />
-                </div>
-              </div>
-            </Card>
-          )}
-
-          {/* SUB-SECTION 5: FAQS */}
-          {cmsSubTab === "faqs" && (
-            <Card className="border-border bg-card p-5 space-y-4 max-w-3xl">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-bold text-foreground">Frequently Asked Questions (FAQs)</h3>
-                  <p className="text-xs text-muted-foreground">Add, edit, or remove questions shown in the interactive accordion.</p>
-                </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() =>
-                    updateCms((c) => ({
-                      ...c,
-                      faqs_section: {
-                        ...c.faqs_section,
-                        items: [
-                          ...c.faqs_section.items,
-                          {
-                            q: "What is your refund policy?",
-                            a: "We offer a 14-day risk-free money-back guarantee for all paid tiers.",
-                          },
-                        ],
-                      },
-                    }))
-                  }
-                  className="text-xs"
-                >
-                  <Plus className="mr-1 size-3.5" /> Add FAQ
-                </Button>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 border-b border-border pb-4">
-                <div>
-                  <Label className="text-xs">Section Heading</Label>
-                  <Input
-                    value={settings.landing_page_cms.faqs_section?.title || ""}
-                    onChange={(e) =>
-                      updateCms((c) => ({
-                        ...c,
-                        faqs_section: { ...c.faqs_section, title: e.target.value },
-                      }))
-                    }
-                    className="mt-1 h-8 text-xs"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs">Section Subtitle</Label>
-                  <Input
-                    value={settings.landing_page_cms.faqs_section?.subtitle || ""}
-                    onChange={(e) =>
-                      updateCms((c) => ({
-                        ...c,
-                        faqs_section: { ...c.faqs_section, subtitle: e.target.value },
-                      }))
-                    }
-                    className="mt-1 h-8 text-xs"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                {settings.landing_page_cms.faqs_section.items.map((faq, idx) => (
-                  <div key={idx} className="rounded-lg border border-border p-3 space-y-2 bg-muted/20">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-[11px] font-bold text-foreground">Question #{idx + 1}</Label>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() =>
-                          updateCms((c) => ({
-                            ...c,
-                            faqs_section: {
-                              ...c.faqs_section,
-                              items: c.faqs_section.items.filter((_, i) => i !== idx),
-                            },
-                          }))
-                        }
-                        className="text-xs text-destructive hover:bg-destructive/10"
-                      >
-                        <Trash2 className="size-3.5" />
-                      </Button>
-                    </div>
-                    <Input
-                      value={faq.q}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        updateCms((c) => {
-                          const next = [...c.faqs_section.items];
-                          next[idx] = { ...next[idx], q: val };
-                          return { ...c, faqs_section: { ...c.faqs_section, items: next } };
-                        });
-                      }}
-                      className="h-8 text-xs font-semibold"
-                    />
-                    <Textarea
-                      value={faq.a}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        updateCms((c) => {
-                          const next = [...c.faqs_section.items];
-                          next[idx] = { ...next[idx], a: val };
-                          return { ...c, faqs_section: { ...c.faqs_section, items: next } };
-                        });
-                      }}
-                      className="text-xs"
-                      rows={2}
-                    />
-                  </div>
-                ))}
-              </div>
-            </Card>
-          )}
-
-          {/* SUB-SECTION 6: FOOTER */}
-          {cmsSubTab === "footer" && (
-            <Card className="border-border bg-card p-5 space-y-4 max-w-2xl">
-              <div>
-                <Label className="text-xs font-semibold">Company Name</Label>
-                <Input
-                  value={settings.landing_page_cms.footer?.company_name || ""}
-                  onChange={(e) =>
-                    updateCms((c) => ({
-                      ...c,
-                      footer: { ...c.footer, company_name: e.target.value },
-                    }))
-                  }
-                  className="mt-1 h-9"
-                />
-              </div>
-
-              <div>
-                <Label className="text-xs font-semibold">Company Tagline</Label>
-                <Input
-                  value={settings.landing_page_cms.footer?.tagline || ""}
-                  onChange={(e) =>
-                    updateCms((c) => ({
-                      ...c,
-                      footer: { ...c.footer, tagline: e.target.value },
-                    }))
-                  }
-                  className="mt-1 h-9"
-                />
-              </div>
-
-              <div>
-                <Label className="text-xs font-semibold">Copyright Notice</Label>
-                <Input
-                  value={settings.landing_page_cms.footer?.copyright || ""}
-                  onChange={(e) =>
-                    updateCms((c) => ({
-                      ...c,
-                      footer: { ...c.footer, copyright: e.target.value },
-                    }))
-                  }
-                  className="mt-1 h-9"
-                />
-              </div>
-            </Card>
-          )}
+          </div>
         </div>
       )}
     </div>

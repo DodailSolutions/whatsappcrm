@@ -6,6 +6,7 @@ import Script from "next/script";
 import "./globals.css";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { ThemedToaster } from "@/components/themed-toaster";
+import { PwaRegister } from "@/components/pwa/pwa-register";
 import {
   DEFAULT_MODE,
   DEFAULT_THEME,
@@ -30,12 +31,18 @@ export async function generateMetadata(): Promise<Metadata> {
 
 const metadata: Metadata = {
   title: {
-    default: "Dodail CRM",
+    default: "Dodail WhatsApp CRM — Sales, Bookings & Automations",
     template: "%s — Dodail CRM",
   },
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Dodail CRM",
+  },
   robots: {
-    index: false,
-    follow: false,
+    index: true,
+    follow: true,
   },
   formatDetection: {
     email: false,
@@ -45,8 +52,8 @@ const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0D1B2A",
-  colorScheme: "dark light",
+  themeColor: "#F15A22",
+  colorScheme: "light dark",
 };
 
 // Inline boot script — runs before React hydrates so the user's
@@ -116,6 +123,7 @@ export default async function RootLayout({
           <ThemeProvider>
             {children}
             <ThemedToaster />
+            <PwaRegister />
           </ThemeProvider>
         </NextIntlClientProvider>
       </body>

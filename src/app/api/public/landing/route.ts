@@ -11,29 +11,85 @@ export async function GET() {
       .eq("id", "global_config")
       .maybeSingle();
 
+    const raw = settings?.landing_page_cms || {};
+
     const cms: LandingPageCMS = {
       ...DEFAULT_LANDING_CMS,
-      ...(settings?.landing_page_cms || {}),
+      ...raw,
+      sections: raw.sections?.length ? raw.sections : DEFAULT_LANDING_CMS.sections,
+      navigation: {
+        ...DEFAULT_LANDING_CMS.navigation,
+        ...(raw.navigation || {}),
+        items: raw.navigation?.items?.length ? raw.navigation.items : DEFAULT_LANDING_CMS.navigation.items,
+      },
       hero: {
         ...DEFAULT_LANDING_CMS.hero,
-        ...(settings?.landing_page_cms?.hero || {}),
+        ...(raw.hero || {}),
+        mockup: {
+          ...DEFAULT_LANDING_CMS.hero.mockup,
+          ...(raw.hero?.mockup || {}),
+        },
+        trust_points: raw.hero?.trust_points?.length ? raw.hero.trust_points : DEFAULT_LANDING_CMS.hero.trust_points,
       },
-      stats: settings?.landing_page_cms?.stats?.length
-        ? settings.landing_page_cms.stats
-        : DEFAULT_LANDING_CMS.stats,
-      case_studies_section: {
-        ...DEFAULT_LANDING_CMS.case_studies_section,
-        ...(settings?.landing_page_cms?.case_studies_section || {}),
-        items: settings?.landing_page_cms?.case_studies_section?.items?.length
-          ? settings.landing_page_cms.case_studies_section.items
-          : DEFAULT_LANDING_CMS.case_studies_section.items,
+      metrics_strip: {
+        ...DEFAULT_LANDING_CMS.metrics_strip,
+        ...(raw.metrics_strip || {}),
+        items: raw.metrics_strip?.items?.length ? raw.metrics_strip.items : DEFAULT_LANDING_CMS.metrics_strip.items,
       },
-      faqs_section: {
-        ...DEFAULT_LANDING_CMS.faqs_section,
-        ...(settings?.landing_page_cms?.faqs_section || {}),
-        items: settings?.landing_page_cms?.faqs_section?.items?.length
-          ? settings.landing_page_cms.faqs_section.items
-          : DEFAULT_LANDING_CMS.faqs_section.items,
+      business_types: {
+        ...DEFAULT_LANDING_CMS.business_types,
+        ...(raw.business_types || {}),
+        filter_categories: raw.business_types?.filter_categories?.length
+          ? raw.business_types.filter_categories
+          : DEFAULT_LANDING_CMS.business_types.filter_categories,
+        cards: raw.business_types?.cards?.length
+          ? raw.business_types.cards
+          : DEFAULT_LANDING_CMS.business_types.cards,
+      },
+      features: {
+        ...DEFAULT_LANDING_CMS.features,
+        ...(raw.features || {}),
+        cards: raw.features?.cards?.length ? raw.features.cards : DEFAULT_LANDING_CMS.features.cards,
+      },
+      how_it_works: {
+        ...DEFAULT_LANDING_CMS.how_it_works,
+        ...(raw.how_it_works || {}),
+        steps: raw.how_it_works?.steps?.length ? raw.how_it_works.steps : DEFAULT_LANDING_CMS.how_it_works.steps,
+      },
+      outcomes: {
+        ...DEFAULT_LANDING_CMS.outcomes,
+        ...(raw.outcomes || {}),
+        bullets: raw.outcomes?.bullets?.length ? raw.outcomes.bullets : DEFAULT_LANDING_CMS.outcomes.bullets,
+        notifications: raw.outcomes?.notifications?.length
+          ? raw.outcomes.notifications
+          : DEFAULT_LANDING_CMS.outcomes.notifications,
+      },
+      faqs: {
+        ...DEFAULT_LANDING_CMS.faqs,
+        ...(raw.faqs || {}),
+        items: raw.faqs?.items?.length ? raw.faqs.items : DEFAULT_LANDING_CMS.faqs.items,
+      },
+      pricing: {
+        ...DEFAULT_LANDING_CMS.pricing,
+        ...(raw.pricing || {}),
+        plans: raw.pricing?.plans?.length ? raw.pricing.plans : DEFAULT_LANDING_CMS.pricing.plans,
+      },
+      final_cta: {
+        ...DEFAULT_LANDING_CMS.final_cta,
+        ...(raw.final_cta || {}),
+      },
+      footer: {
+        ...DEFAULT_LANDING_CMS.footer,
+        ...(raw.footer || {}),
+        columns: raw.footer?.columns?.length ? raw.footer.columns : DEFAULT_LANDING_CMS.footer.columns,
+        social_links: {
+          ...DEFAULT_LANDING_CMS.footer.social_links,
+          ...(raw.footer?.social_links || {}),
+        },
+      },
+      seo: {
+        ...DEFAULT_LANDING_CMS.seo,
+        ...(raw.seo || {}),
       },
     };
 
@@ -46,4 +102,3 @@ export async function GET() {
     return NextResponse.json({ cms: DEFAULT_LANDING_CMS, pricing: null });
   }
 }
-
