@@ -297,6 +297,173 @@ const LEAD_CAPTURE: FlowTemplate = {
   ],
 };
 
+const APPOINTMENT_BOOKING: FlowTemplate = {
+  slug: "appointment_booking",
+  name: "AI Appointment & Consultation Scheduler",
+  description: "Qualify customer needs, check doctor/chair/service availability, and schedule bookings.",
+  icon: "HelpCircle",
+  trigger_type: "keyword",
+  trigger_config: { keywords: ["book", "appointment", "consultation", "schedule"] },
+  entry_node_id: "start",
+  nodes: [
+    {
+      node_key: "start",
+      node_type: "start",
+      config: { next_node_key: "intro" },
+    },
+    {
+      node_key: "intro",
+      node_type: "send_message",
+      config: {
+        text: "👋 Welcome! I can help you schedule an appointment with our specialist team.",
+        next_node_key: "ask_service",
+      } as SendMessageNodeConfig,
+    },
+    {
+      node_key: "ask_service",
+      node_type: "collect_input",
+      config: {
+        prompt_text: "What service or treatment would you like to schedule? (e.g. Consultation, Checkup, Service)",
+        var_key: "requested_service",
+        next_node_key: "ask_preferred_date",
+      } as CollectInputNodeConfig,
+    },
+    {
+      node_key: "ask_preferred_date",
+      node_type: "collect_input",
+      config: {
+        prompt_text: "Great! What date works best for you? (e.g. Tomorrow morning, Friday 3 PM, or YYYY-MM-DD)",
+        var_key: "preferred_date",
+        next_node_key: "ask_customer_name",
+      } as CollectInputNodeConfig,
+    },
+    {
+      node_key: "ask_customer_name",
+      node_type: "collect_input",
+      config: {
+        prompt_text: "May I have your full name for the reservation record?",
+        var_key: "patient_name",
+        next_node_key: "confirm_booking",
+      } as CollectInputNodeConfig,
+    },
+    {
+      node_key: "confirm_booking",
+      node_type: "send_message",
+      config: {
+        text: "Thank you {{vars.patient_name}}! We have logged your request for {{vars.requested_service}} on {{vars.preferred_date}}. Connecting you with our coordinator to confirm your slot.",
+        next_node_key: "handoff",
+      } as SendMessageNodeConfig,
+    },
+    {
+      node_key: "handoff",
+      node_type: "handoff",
+      config: {
+        note: "Appointment request from {{vars.patient_name}} for {{vars.requested_service}} on {{vars.preferred_date}}.",
+      } as HandoffNodeConfig,
+    },
+  ],
+};
+
+const AGENCY_LEAD_QUALIFIER: FlowTemplate = {
+  slug: "agency_lead_qualifier",
+  name: "Agency & Digital Solutions Qualifier",
+  description: "Capture marketing budget, project scope, timeline, and schedule discovery calls.",
+  icon: "UserPlus",
+  trigger_type: "first_inbound_message",
+  trigger_config: {},
+  entry_node_id: "start",
+  nodes: [
+    {
+      node_key: "start",
+      node_type: "start",
+      config: { next_node_key: "welcome" },
+    },
+    {
+      node_key: "welcome",
+      node_type: "send_message",
+      config: {
+        text: "Hi there! Thanks for reaching out to our agency. Let's explore how we can grow your brand.",
+        next_node_key: "ask_business_goal",
+      } as SendMessageNodeConfig,
+    },
+    {
+      node_key: "ask_business_goal",
+      node_type: "collect_input",
+      config: {
+        prompt_text: "What is your primary goal right now? (1: Performance Ads, 2: Website / App Dev, 3: Full Digital Marketing)",
+        var_key: "service_interest",
+        next_node_key: "ask_monthly_budget",
+      } as CollectInputNodeConfig,
+    },
+    {
+      node_key: "ask_monthly_budget",
+      node_type: "collect_input",
+      config: {
+        prompt_text: "What is your estimated monthly marketing/project budget? (e.g. ₹50k - ₹1L, ₹2L+, $3k+)",
+        var_key: "budget_range",
+        next_node_key: "ask_company_website",
+      } as CollectInputNodeConfig,
+    },
+    {
+      node_key: "ask_company_website",
+      node_type: "collect_input",
+      config: {
+        prompt_text: "Please share your company name and website or Instagram handle:",
+        var_key: "company_info",
+        next_node_key: "handoff_account_manager",
+      } as CollectInputNodeConfig,
+    },
+    {
+      node_key: "handoff_account_manager",
+      node_type: "handoff",
+      config: {
+        note: "Qualified Agency Lead: {{vars.company_info}} | Interest: {{vars.service_interest}} | Budget: {{vars.budget_range}}",
+      } as HandoffNodeConfig,
+    },
+  ],
+};
+
+const ORDER_DELIVERY_TRACKER: FlowTemplate = {
+  slug: "order_delivery_tracker",
+  name: "Order, Laundry & Delivery Status Tracker",
+  description: "Allow customers to check their order status, bag count, and scheduled delivery route.",
+  icon: "MessageSquare",
+  trigger_type: "keyword",
+  trigger_config: { keywords: ["order", "status", "delivery", "tracking", "pickup"] },
+  entry_node_id: "start",
+  nodes: [
+    {
+      node_key: "start",
+      node_type: "start",
+      config: { next_node_key: "prompt_order_id" },
+    },
+    {
+      node_key: "prompt_order_id",
+      node_type: "collect_input",
+      config: {
+        prompt_text: "📦 Please enter your 4 or 5-digit Order / Society Unit number to check current delivery status:",
+        var_key: "order_reference",
+        next_node_key: "status_reply",
+      } as CollectInputNodeConfig,
+    },
+    {
+      node_key: "status_reply",
+      node_type: "send_message",
+      config: {
+        text: "Checking status for order #{{vars.order_reference}}... Your items have been processed and assigned to the dispatch team.",
+        next_node_key: "agent_support_check",
+      } as SendMessageNodeConfig,
+    },
+    {
+      node_key: "agent_support_check",
+      node_type: "handoff",
+      config: {
+        note: "Customer queried delivery status for order #{{vars.order_reference}}.",
+      } as HandoffNodeConfig,
+    },
+  ],
+};
+
 // ============================================================
 // Registry
 // ============================================================
@@ -305,6 +472,9 @@ const TEMPLATES: Record<string, FlowTemplate> = {
   welcome_menu: WELCOME_MENU,
   faq_bot: FAQ_BOT,
   lead_capture: LEAD_CAPTURE,
+  appointment_booking: APPOINTMENT_BOOKING,
+  agency_lead_qualifier: AGENCY_LEAD_QUALIFIER,
+  order_delivery_tracker: ORDER_DELIVERY_TRACKER,
 };
 
 export function getFlowTemplate(slug: string): FlowTemplate | null {

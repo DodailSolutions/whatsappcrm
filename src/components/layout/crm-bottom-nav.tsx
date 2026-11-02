@@ -19,6 +19,7 @@ import {
   Workflow,
   Megaphone,
   Stethoscope,
+  CalendarCheck,
   Globe,
   ShieldCheck,
   Settings,
@@ -44,6 +45,7 @@ export function CrmBottomNav() {
     { href: "/pipelines", label: "Pipelines", icon: GitBranch },
     { href: "/broadcasts", label: "Broadcasts", icon: Radio },
     { href: "/catalog", label: "Business Catalog", icon: Package },
+    { href: "/bookings", label: "Bookings", icon: CalendarCheck },
     ...(account?.business_type === "digital_agency" ||
     account?.business_type === "digital_solutions" ||
     account?.business_type === "marketing_tech_agency"

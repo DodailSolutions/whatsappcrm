@@ -7,18 +7,32 @@ export async function GET() {
     const ctx = await getCurrentAccount();
     const admin = supabaseAdmin();
 
-    const [workspacesRes, contactsRes, messagesRes, settingsRes] = await Promise.all([
+    const [
+      workspacesRes,
+      contactsRes,
+      messagesRes,
+      usersRes,
+      appointmentsRes,
+      automationsRes,
+      settingsRes,
+    ] = await Promise.all([
       admin
         .from("accounts")
         .select("id, name, business_type, subscription_tier, subscription_status, is_demo, created_at, owner_user_id"),
       admin.from("contacts").select("id", { count: "exact", head: true }),
       admin.from("messages").select("id", { count: "exact", head: true }),
+      admin.from("profiles").select("id, user_id, full_name, email, role, created_at, account_id"),
+      admin.from("appointments").select("id, status, appointment_date, service_name, created_at"),
+      admin.from("automations").select("id, is_active", { count: "exact" }),
       admin.from("super_admin_settings").select("*").eq("id", "global_config").single(),
     ]);
 
     const workspaces = workspacesRes.data || [];
+    const users = usersRes.data || [];
+    const appointments = appointmentsRes.data || [];
     const totalContacts = contactsRes.count || 0;
     const totalMessages = messagesRes.count || 0;
+    const totalAutomations = automationsRes.count || 0;
     const settings = settingsRes.data || {
       payment_gateway_config: { razorpay_enabled: true, stripe_enabled: true, sandbox_mode: true },
       landing_page_cms: {
@@ -48,10 +62,15 @@ export async function GET() {
         totalWorkspaces: workspaces.length,
         totalContacts,
         totalMessages,
+        totalUsers: users.length,
+        totalAppointments: appointments.length,
+        totalAutomations,
         mrr,
         activeTenants: workspaces.filter((w) => w.subscription_status === "active").length,
       },
       workspaces,
+      users,
+      appointments,
       settings,
     });
   } catch (err) {
