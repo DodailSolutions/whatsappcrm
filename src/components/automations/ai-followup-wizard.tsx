@@ -313,7 +313,7 @@ export function AiFollowupWizard({
                 </div>
                 <div>
                   <Label className="text-xs">Business Hours Window</Label>
-                  <Select value={timeCondition} onValueChange={setTimeCondition}>
+                  <Select value={timeCondition} onValueChange={(v) => setTimeCondition(v ?? 'anytime')}>
                     <SelectTrigger className="mt-1">
                       <SelectValue />
                     </SelectTrigger>
@@ -441,7 +441,7 @@ export function AiFollowupWizard({
                 {useWhatsAppTemplate && (
                   <div className="pt-2 border-t border-border">
                     <Label className="text-xs">Select Approved Template</Label>
-                    <Select value={selectedMetaTemplate} onValueChange={setSelectedMetaTemplate}>
+                    <Select value={selectedMetaTemplate} onValueChange={(v) => setSelectedMetaTemplate(v ?? '')}>
                       <SelectTrigger className="mt-1">
                         <SelectValue placeholder="Choose registered template..." />
                       </SelectTrigger>

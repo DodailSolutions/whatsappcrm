@@ -254,7 +254,7 @@ export function AiSalesAgentTab() {
 
           <div>
             <Label className="text-xs">Default Salesperson Assignee</Label>
-            <Select value={defaultAssigneeId} onValueChange={setDefaultAssigneeId}>
+            <Select value={defaultAssigneeId} onValueChange={(v) => setDefaultAssigneeId(v ?? '')}>
               <SelectTrigger className="mt-1">
                 <SelectValue placeholder="Round-robin team distribution" />
               </SelectTrigger>

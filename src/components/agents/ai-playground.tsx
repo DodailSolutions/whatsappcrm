@@ -228,7 +228,7 @@ export function AiPlayground({ onGoToSetup }: { onGoToSetup?: () => void }) {
           </div>
 
           <div className="flex items-center gap-2">
-            <Select onValueChange={loadScenario}>
+            <Select onValueChange={(v) => v && loadScenario(v)}>
               <SelectTrigger className="h-7 text-xs w-[220px] bg-muted/30 border-border">
                 <SelectValue placeholder="Load Test Scenario..." />
               </SelectTrigger>
