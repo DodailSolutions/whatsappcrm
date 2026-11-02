@@ -449,6 +449,44 @@ async function executeStepsFrom(args: ExecuteArgs): Promise<ScopeOutcome> {
   let status: 'success' | 'partial' | 'failed' = 'success'
   let errorMessage: string | null = null
 
+  // WhatsApp Compliance: Check if contact opted out
+  if (args.contactId) {
+    const { data: contact } = await db
+      .from('contacts')
+      .select('is_opted_out')
+      .eq('id', args.contactId)
+      .maybeSingle()
+    if (contact?.is_opted_out) {
+      const detail = 'Compliance: Contact has opted out of messaging'
+      if (args.logId) {
+        await appendResults(args.logId, [], 'failed', detail)
+      }
+      return 'failed'
+    }
+  }
+
+  // Sequence Stop Conditions: Check if customer replied while waiting
+  const stopConds = (args.automation.stop_conditions as any[]) ?? []
+  if (args.startPosition > 0 && stopConds.length > 0 && args.context.conversation_id) {
+    const wantsReplyStop = stopConds.some((c) => c.type === 'customer_replied')
+    if (wantsReplyStop) {
+      const { data: recentInbound } = await db
+        .from('messages')
+        .select('id')
+        .eq('conversation_id', args.context.conversation_id)
+        .eq('direction', 'inbound')
+        .gte('created_at', new Date(Date.now() - 86400000).toISOString())
+        .limit(1)
+      if (recentInbound && recentInbound.length > 0) {
+        const detail = 'Sequence stopped: customer replied to conversation'
+        if (args.logId) {
+          await appendResults(args.logId, [], 'success', detail)
+        }
+        return 'completed'
+      }
+    }
+  }
+
   for (const step of steps as AutomationStep[]) {
     // `wait` is the suspension point: enqueue and stop processing this
     // scope. The cron endpoint will pick it up later.
@@ -1087,11 +1125,25 @@ function waitMs(cfg: WaitStepConfig): number {
 }
 
 function interpolate(s: string, args: ExecuteArgs): string {
-  return s.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_, key) => {
-    const [ns, prop] = String(key).split('.')
+  return s.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (match, key) => {
+    const rawKey = String(key)
+    const [ns, prop] = rawKey.split('.')
     if (ns === 'message' && prop === 'text') return String(args.context.message_text ?? '')
     if (ns === 'vars' && prop) return String(args.context.vars?.[prop] ?? '')
-    return ''
+
+    // Direct token support: {{first_name}}, {{business_name}}, {{clinic_name}}, etc.
+    if (args.context.vars && args.context.vars[rawKey] !== undefined && args.context.vars[rawKey] !== null) {
+      return String(args.context.vars[rawKey])
+    }
+
+    if (rawKey === 'business_name') return 'Dodail Solutions'
+    if (rawKey === 'clinic_name') return (args.context.vars?.clinic_name as string) || 'Dodail Health Clinic'
+    if (rawKey === 'business_location') return (args.context.vars?.business_location as string) || 'Reception Desk'
+    if (rawKey === 'lead_owner') return (args.context.vars?.lead_owner as string) || 'Specialist Advisor'
+    if (rawKey === 'product_name') return (args.context.vars?.product_name as string) || 'Product/Service'
+    if (rawKey === 'service_name') return (args.context.vars?.service_name as string) || 'Consultation'
+
+    return match
   })
 }
 

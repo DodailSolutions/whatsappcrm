@@ -22,6 +22,7 @@ import {
   handleTemplateWebhookChange,
   isTemplateWebhookField,
 } from '@/lib/whatsapp/template-webhook'
+import { evaluateClinicalSafety } from '@/lib/healthcare/opd-agent'
 
 // The `after()` callback in POST runs within this route's max duration.
 // Inbound processing can fan out to per-media Meta verification calls, so
@@ -851,6 +852,40 @@ async function processMessage(
   // update above so the write can be gated on the row's CURRENT status in
   // SQL — see the helper for why that matters.
   await reopenClosedConversation(supabaseAdmin(), conversation)
+
+  // Compliance: Opt-out handling (STOP / UNSUBSCRIBE / CANCEL)
+  const normalizedInbound = (contentText || '').trim().toLowerCase()
+  if (['stop', 'unsubscribe', 'cancel', 'optout', 'opt out'].includes(normalizedInbound)) {
+    await supabaseAdmin()
+      .from('contacts')
+      .update({ is_opted_out: true })
+      .eq('id', contactRecord.id)
+
+    await supabaseAdmin()
+      .from('automation_pending_executions')
+      .update({ status: 'cancelled' })
+      .eq('contact_id', contactRecord.id)
+      .eq('status', 'pending')
+
+    console.info(`[compliance] Contact ${contactRecord.id} opted out via "${contentText}". Pending automations cancelled.`)
+  } else if (['start', 'unstop', 'subscribe'].includes(normalizedInbound)) {
+    await supabaseAdmin()
+      .from('contacts')
+      .update({ is_opted_out: false })
+      .eq('id', contactRecord.id)
+  }
+
+  // Healthcare OPD Guardrail: Clinical emergency auto-triage
+  const clinicalSafety = evaluateClinicalSafety(contentText || '')
+  if (clinicalSafety.isClinicalEmergency) {
+    await supabaseAdmin()
+      .from('conversations')
+      .update({
+        ai_autoreply_disabled: true,
+        ai_handoff_summary: `CLINICAL EMERGENCY DETECTED (${clinicalSafety.matchedKeywords.join(', ')}). Automated replies paused; escalated to clinic staff.`,
+      })
+      .eq('id', conversation.id)
+  }
 
   // If this contact was a recent broadcast recipient, flag the reply
   // so the broadcast's `replied_count` advances (via the aggregate

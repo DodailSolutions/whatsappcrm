@@ -62,7 +62,18 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null)
   if (!body) return NextResponse.json({ error: t('common.invalidJson') }, { status: 400 })
 
-  const { name, description, trigger_type, trigger_config, is_active, steps, template } = body
+  const {
+    name,
+    description,
+    trigger_type,
+    trigger_config,
+    is_active,
+    steps,
+    template,
+    category,
+    stop_conditions,
+    handoff_rules,
+  } = body
 
   let effectiveSteps: BuilderStepInput[] | undefined = steps
   let effectiveName = name
@@ -118,6 +129,9 @@ export async function POST(request: Request) {
       trigger_type: effectiveTriggerType,
       trigger_config: effectiveTriggerConfig ?? {},
       is_active: !!is_active,
+      category: category ?? 'general',
+      stop_conditions: stop_conditions ?? [],
+      handoff_rules: handoff_rules ?? {},
     })
     .select()
     .single()

@@ -104,6 +104,11 @@ export interface Contact {
   user_id: string;
   account_id: string;
   lead_source?: string;
+  budget?: string | null;
+  location_preference?: string | null;
+  timeline?: string | null;
+  service_interest?: string | null;
+  is_opted_out?: boolean;
   /** Empty string for a contact Meta only ever identified by BSUID —
    *  see `wa_user_id`. */
   phone: string;
@@ -653,11 +658,65 @@ export interface Automation {
   user_id: string;
   name: string;
   description?: string;
+  category?: 'general' | 'ai_followup';
+  stop_conditions?: StopCondition[];
+  handoff_rules?: HandoffRules;
   trigger_type: AutomationTriggerType;
   trigger_config: AutomationTriggerConfig;
   is_active: boolean;
   execution_count: number;
   last_executed_at?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StopCondition {
+  type: 'customer_replied' | 'opted_out' | 'deal_won' | 'deal_lost' | 'tag_added' | 'appointment_booked';
+  value?: string;
+}
+
+export interface HandoffRules {
+  enable_handoff: boolean;
+  handoff_agent_id?: string | null;
+  clinical_emergency_trigger?: boolean;
+  missing_info_trigger?: boolean;
+  sentiment_trigger?: boolean;
+}
+
+export interface Appointment {
+  id: string;
+  account_id: string;
+  contact_id: string;
+  conversation_id?: string | null;
+  service_name: string;
+  provider_name?: string | null;
+  appointment_date: string;
+  appointment_time: string;
+  status: 'pending' | 'confirmed' | 'cancelled' | 'rescheduled' | 'completed' | 'no_show';
+  clinic_location?: string | null;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+  contact?: Contact;
+}
+
+export interface QualificationQuestion {
+  key: string;
+  question: string;
+  required: boolean;
+}
+
+export interface AiSalesAgentConfig {
+  id: string;
+  account_id: string;
+  is_enabled: boolean;
+  auto_reply_enabled: boolean;
+  agent_name: string;
+  qualification_questions: QualificationQuestion[];
+  target_pipeline_id?: string | null;
+  target_stage_id?: string | null;
+  default_assignee_id?: string | null;
+  prohibit_unconfirmed_commitments: boolean;
   created_at: string;
   updated_at: string;
 }

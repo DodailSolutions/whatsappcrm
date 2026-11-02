@@ -2,15 +2,16 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Bot, Sparkles, Settings2, BarChart3 } from 'lucide-react';
+import { Bot, Sparkles, Settings2, BarChart3, TrendingUp } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { AiPlayground } from '@/components/agents/ai-playground';
 import { AiUsageCard } from '@/components/agents/ai-usage';
 import { AiConfig } from '@/components/settings/ai-config';
+import { AiSalesAgentTab } from '@/components/agents/ai-sales-agent-tab';
 import { useAuth } from '@/hooks/use-auth';
 import { canEditSettings } from '@/lib/auth/roles';
 
-type Tab = 'playground' | 'setup' | 'usage';
+type Tab = 'playground' | 'sales_agent' | 'setup' | 'usage';
 
 export default function AgentsPage() {
   const t = useTranslations('Agents');
@@ -60,6 +61,9 @@ export default function AgentsPage() {
             <TabsTrigger value="playground">
               <Sparkles className="mr-1.5 h-4 w-4" /> {t('tabPlayground')}
             </TabsTrigger>
+            <TabsTrigger value="sales_agent" className="text-primary font-medium">
+              <TrendingUp className="mr-1.5 h-4 w-4" /> AI Sales Agent
+            </TabsTrigger>
             <TabsTrigger value="setup">
               <Settings2 className="mr-1.5 h-4 w-4" /> {t('tabSetup')}
             </TabsTrigger>
@@ -72,6 +76,10 @@ export default function AgentsPage() {
 
           <TabsContent value="playground" className="mt-4">
             <AiPlayground onGoToSetup={() => setTab('setup')} />
+          </TabsContent>
+
+          <TabsContent value="sales_agent" className="mt-4">
+            <AiSalesAgentTab />
           </TabsContent>
 
           <TabsContent value="setup" className="mt-4">

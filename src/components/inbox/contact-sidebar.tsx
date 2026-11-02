@@ -15,6 +15,9 @@ import {
   Plus,
   Clock,
   X,
+  Sparkles,
+  ShieldCheck,
+  ShieldAlert,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -385,6 +388,49 @@ export function ContactSidebar({ contact, conversation }: ContactSidebarProps) {
             ) : (
               <p className="mt-1.5 text-xs text-muted-foreground">No follow-up reminder scheduled.</p>
             )}
+          </div>
+
+          <div className="border-t border-border" />
+
+          {/* AI Qualification & Messaging Compliance */}
+          <div>
+            <div className="flex items-center justify-between text-xs font-semibold text-foreground">
+              <span className="flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5 text-primary" />
+                AI Qualification
+              </span>
+              {contact.is_opted_out ? (
+                <span className="flex items-center gap-1 text-[10px] font-bold text-red-400">
+                  <ShieldAlert className="h-3 w-3" /> Opted Out
+                </span>
+              ) : (
+                <span className="flex items-center gap-1 text-[10px] text-emerald-400">
+                  <ShieldCheck className="h-3 w-3" /> Subscribed
+                </span>
+              )}
+            </div>
+            <div className="mt-2 space-y-1.5 rounded-lg border border-border/60 bg-muted/20 p-2.5 text-xs">
+              <div className="flex justify-between text-[11px]">
+                <span className="text-muted-foreground">Budget:</span>
+                <span className="font-semibold text-foreground">{contact.budget || "Pending inquiry"}</span>
+              </div>
+              <div className="flex justify-between text-[11px]">
+                <span className="text-muted-foreground">Timeline:</span>
+                <span className="text-foreground">{contact.timeline || "Pending inquiry"}</span>
+              </div>
+              {contact.location_preference && (
+                <div className="flex justify-between text-[11px]">
+                  <span className="text-muted-foreground">Location:</span>
+                  <span className="text-foreground">{contact.location_preference}</span>
+                </div>
+              )}
+              {contact.service_interest && (
+                <div className="flex justify-between text-[11px]">
+                  <span className="text-muted-foreground">Interest:</span>
+                  <span className="text-foreground">{contact.service_interest}</span>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="border-t border-border" />

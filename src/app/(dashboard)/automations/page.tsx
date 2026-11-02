@@ -16,6 +16,7 @@ import {
   Users,
   PhoneCall,
   Loader2,
+  Sparkles,
 } from "lucide-react"
 
 import { createClient } from "@/lib/supabase/client"
@@ -25,6 +26,8 @@ import type { Automation } from "@/types"
 import { Button } from "@/components/ui/button"
 import { GatedButton } from "@/components/ui/gated-button"
 import { Switch } from "@/components/ui/switch"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { AiFollowupGallery } from "@/components/automations/ai-followup-gallery"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -67,6 +70,7 @@ export default function AutomationsPage() {
   const [error, setError] = useState<string | null>(null)
   const [pendingDelete, setPendingDelete] = useState<Automation | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [activeTab, setActiveTab] = useState<'workflows' | 'ai_templates'>('workflows')
 
   async function load() {
     try {
@@ -179,6 +183,17 @@ export default function AutomationsPage() {
         </GatedButton>
       </div>
 
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
+        <TabsList className="bg-card border border-border">
+          <TabsTrigger value="workflows" className="text-xs">
+            All Workflows ({automations.length})
+          </TabsTrigger>
+          <TabsTrigger value="ai_templates" className="text-xs gap-1.5 text-primary">
+            <Sparkles className="h-3.5 w-3.5" /> AI Follow-up Templates (10)
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="workflows" className="mt-4 space-y-6">
       {showTemplates && (
         <section>
           <h2 className="mb-3 text-sm font-semibold text-muted-foreground">{t("templatesTitle")}</h2>
@@ -230,6 +245,12 @@ export default function AutomationsPage() {
           ))}
         </ul>
       )}
+        </TabsContent>
+
+        <TabsContent value="ai_templates" className="mt-4">
+          <AiFollowupGallery onAutomationCreated={load} />
+        </TabsContent>
+      </Tabs>
 
       <Dialog open={!!pendingDelete} onOpenChange={(v) => !v && setPendingDelete(null)}>
         <DialogContent>
@@ -315,6 +336,11 @@ function AutomationCard({
             <p className="mt-0.5 truncate text-xs text-muted-foreground">{automation.description}</p>
           )}
           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            {automation.category === 'ai_followup' && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                <Sparkles className="h-3 w-3" /> AI Follow-up
+              </span>
+            )}
             <span
               className={cn(
                 "inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium",

@@ -138,3 +138,5 @@ export const AUTOMATION_TEMPLATES: Record<TemplateSlug, AutomationTemplateDefini
 export function getTemplate(slug: string): AutomationTemplateDefinition | null {
   return AUTOMATION_TEMPLATES[slug as TemplateSlug] ?? null
 }
+
+export * from './ai-followup-templates'
