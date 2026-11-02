@@ -257,3 +257,4 @@ CREATE POLICY agency_proposals_update ON agency_proposals FOR UPDATE
 DROP POLICY IF EXISTS agency_proposals_delete ON agency_proposals;
 CREATE POLICY agency_proposals_delete ON agency_proposals FOR DELETE
   USING (is_account_member(account_id, 'admin'));
+
