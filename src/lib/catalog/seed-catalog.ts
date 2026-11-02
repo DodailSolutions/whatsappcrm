@@ -284,6 +284,136 @@ export const STARTER_CATALOGS: Partial<Record<BusinessType, StarterCatalogData>>
       },
     ],
   },
+
+  digital_agency: {
+    categories: [
+      {
+        name: "Paid Advertising & Performance Marketing",
+        description: "High-ROI PPC and Paid Social campaigns",
+        items: [
+          {
+            name: "Meta & Instagram Ads Management (Monthly)",
+            description: "Audience targeting, creative testing, ROAS optimization, and weekly reporting.",
+            item_type: "package",
+            price: 25000,
+            tax_rate: 18,
+            duration_minutes: 60,
+            required_booking: false,
+            custom_fields: { pricing_model: "monthly_retainer" },
+          },
+          {
+            name: "Google High-Intent Search Ads Management",
+            description: "Keyword bidding, negative list curation, conversion tracking, and monthly management.",
+            item_type: "package",
+            price: 22000,
+            tax_rate: 18,
+            duration_minutes: 60,
+            required_booking: false,
+            custom_fields: { pricing_model: "monthly_retainer" },
+          },
+        ],
+      },
+      {
+        name: "Search Engine Optimization (SEO)",
+        description: "Organic search growth, keyword rankings, and technical audits",
+        items: [
+          {
+            name: "Comprehensive Technical & On-Page SEO Retainer",
+            description: "Technical crawl audits, schema markup, 4 SEO articles/month, and monthly ranking report.",
+            item_type: "package",
+            price: 30000,
+            tax_rate: 18,
+            duration_minutes: 60,
+            required_booking: false,
+            custom_fields: { pricing_model: "monthly_retainer" },
+          },
+          {
+            name: "Google Business Profile & Local 3-Pack Optimization",
+            description: "Local citation building, GBP review management, and local search rankings.",
+            item_type: "service",
+            price: 12000,
+            tax_rate: 18,
+            duration_minutes: 30,
+            required_booking: false,
+            custom_fields: { pricing_model: "fixed" },
+          },
+        ],
+      },
+      {
+        name: "Social Media & Content Creation",
+        description: "Social media management, Reels, and brand assets",
+        items: [
+          {
+            name: "Social Media Reels & Content Package (12 Reels/mo)",
+            description: "Scriptwriting, video editing, custom thumbnails, trending audio, and automated scheduling.",
+            item_type: "package",
+            price: 20000,
+            tax_rate: 18,
+            duration_minutes: 45,
+            required_booking: false,
+            custom_fields: { pricing_model: "monthly_retainer" },
+          },
+        ],
+      },
+    ],
+  },
+
+  digital_solutions: {
+    categories: [
+      {
+        name: "Web & Ecommerce Development",
+        description: "Full-stack web applications and online storefronts",
+        items: [
+          {
+            name: "Custom Next.js & React Web Application",
+            description: "Tailwind CSS, high-performance SSR, CMS integration, and responsive design.",
+            item_type: "service",
+            price: 85000,
+            tax_rate: 18,
+            duration_minutes: 90,
+            required_booking: false,
+            custom_fields: { pricing_model: "fixed_project" },
+          },
+          {
+            name: "Shopify Ecommerce Store Setup & Customization",
+            description: "Theme styling, payment gateway integration, product uploads, and checkout optimization.",
+            item_type: "service",
+            price: 45000,
+            tax_rate: 18,
+            duration_minutes: 60,
+            required_booking: false,
+            custom_fields: { pricing_model: "fixed_project" },
+          },
+        ],
+      },
+      {
+        name: "AI & WhatsApp Solutions",
+        description: "Custom AI sales agents and CRM automations",
+        items: [
+          {
+            name: "WhatsApp CRM & AI Sales Chatbot Implementation",
+            description: "Official Meta API connection, catalog setup, AI agent tuning, and staff training.",
+            item_type: "service",
+            price: 35000,
+            tax_rate: 18,
+            duration_minutes: 60,
+            required_booking: false,
+            custom_fields: { pricing_model: "fixed_project" },
+          },
+          {
+            name: "Monthly Cloud Hosting, Backup & Maintenance Plan",
+            description: "Uptime monitoring, SSL certificates, weekly database backups, and emergency bugfixes.",
+            item_type: "package",
+            price: 7500,
+            tax_rate: 18,
+            duration_minutes: 30,
+            required_booking: false,
+            custom_fields: { pricing_model: "monthly_retainer" },
+          },
+        ],
+      },
+    ],
+  },
 };
 
 /**
@@ -291,7 +421,9 @@ export const STARTER_CATALOGS: Partial<Record<BusinessType, StarterCatalogData>>
  */
 export async function seedStarterCatalog(accountId: string, businessType: BusinessType) {
   const admin = supabaseAdmin();
-  const catalog = STARTER_CATALOGS[businessType] || STARTER_CATALOGS.dental;
+  const catalog =
+    STARTER_CATALOGS[businessType] ||
+    (businessType === "marketing_tech_agency" ? STARTER_CATALOGS.digital_agency : STARTER_CATALOGS.dental);
 
   if (!catalog) return;
 

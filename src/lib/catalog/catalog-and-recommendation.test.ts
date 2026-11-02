@@ -33,6 +33,24 @@ describe("Universal Business Catalog & Starter Seeds", () => {
     expect(STARTER_CATALOGS.rental_car).toBeDefined();
     expect(STARTER_CATALOGS.pet_shop).toBeDefined();
   });
+
+  it("provides complete starter catalog for Digital Agency and Digital Solutions", () => {
+    const agency = STARTER_CATALOGS.digital_agency;
+    expect(agency).toBeDefined();
+    const metaAds = agency?.categories
+      .flatMap((c) => c.items)
+      .find((i) => i.name.includes("Meta & Instagram Ads"));
+    expect(metaAds).toBeDefined();
+    expect(metaAds?.price).toBe(25000);
+
+    const solutions = STARTER_CATALOGS.digital_solutions;
+    expect(solutions).toBeDefined();
+    const nextjs = solutions?.categories
+      .flatMap((c) => c.items)
+      .find((i) => i.name.includes("Next.js"));
+    expect(nextjs).toBeDefined();
+    expect(nextjs?.price).toBe(85000);
+  });
 });
 
 describe("Business-Aware AI Recommendation Engine", () => {
@@ -55,5 +73,12 @@ describe("Business-Aware AI Recommendation Engine", () => {
     expect(recs.length).toBeGreaterThan(0);
     expect(recs[0].template.slug).toBe("ai_sales_followup");
     expect(recs[0].badge).toContain("Real Estate");
+  });
+
+  it("ranks Sales Follow-up & Qualification highest for Digital Marketing Agencies", () => {
+    const recs = getRecommendedTemplates("digital_agency");
+    expect(recs.length).toBeGreaterThan(0);
+    expect(recs[0].template.slug).toBe("ai_sales_followup");
+    expect(recs[0].badge).toBe("Agency Pipeline Closer");
   });
 });

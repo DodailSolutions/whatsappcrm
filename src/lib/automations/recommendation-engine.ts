@@ -99,6 +99,24 @@ export function getRecommendedTemplates(
         }
         break;
 
+      case "digital_agency":
+      case "digital_solutions":
+      case "marketing_tech_agency":
+        if (template.slug === "ai_sales_followup") {
+          score = 100;
+          badge = "Agency Pipeline Closer";
+          reason = "Follows up on digital marketing and software proposals, discovery calls, and retainer pitches.";
+        } else if (template.slug === "ai_lead_qualification") {
+          score = 95;
+          badge = "Client Scope Filter";
+          reason = "Filters inbound agency leads by project scope, monthly ad spend, and timeline.";
+        } else if (template.slug === "ai_quote_followup") {
+          score = 90;
+          badge = "Proposal Nurture";
+          reason = "Accelerates decision-making on custom software and marketing retainer estimates.";
+        }
+        break;
+
       default:
         if (template.slug === "ai_sales_followup") {
           score = 85;

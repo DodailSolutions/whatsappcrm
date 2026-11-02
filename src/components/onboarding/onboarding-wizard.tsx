@@ -32,6 +32,9 @@ import {
   Factory,
   Layers,
   HelpCircle,
+  Megaphone,
+  Code2,
+  Globe,
 } from "lucide-react";
 import type { BusinessType, OperatingModel } from "@/types/business";
 
@@ -51,6 +54,9 @@ export const BUSINESS_TYPES: Array<{
   desc: string;
   icon: any;
 }> = [
+  { id: "digital_agency", name: "Digital Marketing Agency", desc: "Clients, multi-channel campaigns, content approvals & retainer billing", icon: Megaphone },
+  { id: "digital_solutions", name: "Digital Solutions & Tech", desc: "Software dev, website projects, AI chatbot delivery & maintenance", icon: Code2 },
+  { id: "marketing_tech_agency", name: "Marketing & Tech Agency", desc: "Integrated performance marketing, custom software & CRM automations", icon: Globe },
   { id: "dental", name: "Dental Clinic", desc: "Chair booking, patient CRM, treatment plans & dental WhatsApp recall", icon: Stethoscope },
   { id: "healthcare", name: "General Clinic / Hospital", desc: "OPD consults, patient follow-up, doctor slots & reminders", icon: Stethoscope },
   { id: "dry_cleaning", name: "Dry Cleaning", desc: "Garment care, society pickups, garment tracking & billing", icon: Shirt },
@@ -138,6 +144,8 @@ export function OnboardingWizard() {
       if (isCompleted) {
         if (businessType === "dental") {
           router.push("/dental");
+        } else if (["digital_agency", "digital_solutions", "marketing_tech_agency"].includes(businessType)) {
+          router.push("/agency");
         } else {
           router.push("/dashboard");
         }
@@ -322,6 +330,89 @@ export function OnboardingWizard() {
                   Customizing settings for: <span className="font-semibold text-primary">{BUSINESS_TYPES.find(b => b.id === businessType)?.name}</span>
                 </p>
               </div>
+
+              {/* DIGITAL MARKETING & SOLUTIONS AGENCY QUESTIONS */}
+              {["digital_agency", "digital_solutions", "marketing_tech_agency"].includes(businessType) && (
+                <div className="space-y-4 rounded-lg border border-border bg-muted/20 p-4">
+                  <div className="text-sm font-semibold text-foreground">Agency Operating Model & Scale</div>
+
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    {[
+                      { id: "solo", label: "Solo Consultant" },
+                      { id: "freelance", label: "Freelance Agency" },
+                      { id: "small_agency", label: "Boutique Agency" },
+                      { id: "full_service", label: "Full-Service Agency" },
+                      { id: "software_dev", label: "Digital Solutions / Tech" },
+                      { id: "marketing_tech", label: "Marketing & Tech" },
+                      { id: "white_label", label: "White-Label Partner" },
+                      { id: "multi_branch", label: "Multi-Branch Agency" },
+                    ].map((m) => (
+                      <Button
+                        key={m.id}
+                        type="button"
+                        variant={operatingModel.agencyModel === m.id ? "default" : "outline"}
+                        size="sm"
+                        className="text-xs"
+                        onClick={() => setOperatingModel((prev) => ({ ...prev, agencyModel: m.id as any }))}
+                      >
+                        {m.label}
+                      </Button>
+                    ))}
+                  </div>
+
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Core Services Offered (Select All That Apply)</Label>
+                    <div className="mt-2 grid grid-cols-2 gap-1.5 sm:grid-cols-3 max-h-56 overflow-y-auto pr-1">
+                      {[
+                        "Website Design & Next.js Dev",
+                        "Ecommerce & Shopify",
+                        "SEO & Local Search",
+                        "Meta & Instagram Ads",
+                        "Google Search & Display Ads",
+                        "LinkedIn B2B Advertising",
+                        "Social Media Management",
+                        "Reels & Short-Form Video",
+                        "WhatsApp CRM & Automation",
+                        "AI Chatbots & Agents",
+                        "Graphic Design & Branding",
+                        "Email & WhatsApp Marketing",
+                        "Lead Generation & Funnels",
+                        "Custom Software & Apps",
+                        "Hosting & Web Maintenance",
+                        "Analytics & Reporting",
+                      ].map((srv) => {
+                        const currentServices = operatingModel.agencyServices || [
+                          "Website Design & Next.js Dev",
+                          "Meta & Instagram Ads",
+                          "SEO & Local Search",
+                          "WhatsApp CRM & Automation",
+                        ];
+                        const isSelected = currentServices.includes(srv);
+                        return (
+                          <button
+                            key={srv}
+                            type="button"
+                            onClick={() => {
+                              const updated = isSelected
+                                ? currentServices.filter((s) => s !== srv)
+                                : [...currentServices, srv];
+                              setOperatingModel((prev) => ({ ...prev, agencyServices: updated }));
+                            }}
+                            className={`flex items-center justify-between rounded border p-2 text-left text-xs transition-colors ${
+                              isSelected
+                                ? "border-primary bg-primary/10 text-primary font-medium"
+                                : "border-border bg-card text-muted-foreground hover:text-foreground"
+                            }`}
+                          >
+                            <span className="truncate">{srv}</span>
+                            {isSelected && <Check className="size-3 shrink-0 ml-1 text-primary" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* DENTAL CLINIC QUESTIONS */}
               {businessType === "dental" && (
