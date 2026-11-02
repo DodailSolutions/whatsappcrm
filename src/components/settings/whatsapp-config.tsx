@@ -17,6 +17,7 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import { useTranslations } from 'next-intl';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -506,36 +507,46 @@ export function WhatsAppConfig() {
 
   const showResetBanner = resetReason === 'token_corrupted';
 
-  // Step + code + trace id in small muted text, so a user can quote
-  // them to Meta support (issue #505). The step names are wire values
-  // from the route, shown verbatim.
+  // Step + code + trace id in structured debugging card with high contrast,
+  // so a user can quote them to Meta support.
   const renderMetaDetails = (meta: MetaErrorMeta) => (
-    <div className="mt-2 space-y-0.5 text-[11px] leading-relaxed text-muted-foreground break-all">
-      <p>
-        {t('metaErrorStep')}: <code>{meta.step}</code>
+    <div className="mt-3 rounded-lg border border-rose-200/90 bg-white/95 p-3.5 space-y-2 text-xs text-rose-950 shadow-2xs dark:border-rose-900/60 dark:bg-background/90 dark:text-rose-100">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 font-mono text-xs">
+        <span className="inline-flex items-center gap-1 font-semibold text-rose-900 dark:text-rose-300">
+          {t('metaErrorStep')}:
+          <code className="rounded bg-rose-100 px-1.5 py-0.5 text-rose-950 dark:bg-rose-950/60 dark:text-rose-200 font-bold">
+            {meta.step}
+          </code>
+        </span>
         {meta.code !== null && meta.code !== undefined && (
-          <>
-            {' · '}
+          <span className="inline-flex items-center gap-1 text-rose-900 dark:text-rose-300">
             {t('metaErrorCode')}:{' '}
-            <code>
+            <code className="rounded bg-rose-100 px-1.5 py-0.5 text-rose-950 dark:bg-rose-950/60 dark:text-rose-200 font-bold">
               {meta.code}
               {meta.subcode !== null && meta.subcode !== undefined ? `/${meta.subcode}` : ''}
             </code>
-          </>
+          </span>
         )}
         {meta.fbtrace_id && (
-          <>
-            {' · '}
-            {t('metaErrorTrace')}: <code>{meta.fbtrace_id}</code>
-          </>
+          <span className="inline-flex items-center gap-1 text-rose-800 dark:text-rose-300 break-all">
+            {t('metaErrorTrace')}:{' '}
+            <code className="rounded bg-rose-100 px-1.5 py-0.5 text-rose-950 dark:bg-rose-950/60 dark:text-rose-200">
+              {meta.fbtrace_id}
+            </code>
+          </span>
         )}
-      </p>
+      </div>
       {meta.message && (
-        <p>
-          {t('metaErrorMessage')}: {meta.message}
+        <p className="border-t border-rose-100 pt-2 text-xs text-rose-950 dark:border-rose-900/40 dark:text-rose-200 leading-relaxed break-words font-sans">
+          <strong className="font-semibold text-rose-950 dark:text-rose-100">
+            {t('metaErrorMessage')}:
+          </strong>{' '}
+          {meta.message}
         </p>
       )}
-      <p>{t('metaErrorDetailsHint')}</p>
+      <p className="text-[11px] text-rose-700/90 dark:text-rose-400 italic font-sans">
+        {t('metaErrorDetailsHint')}
+      </p>
     </div>
   );
 
@@ -550,30 +561,30 @@ export function WhatsAppConfig() {
       <div className="space-y-6">
         {/* Corrupted-token reset banner */}
         {showResetBanner && (
-          <Alert className="bg-amber-950/40 border-amber-600/40">
+          <Alert className="border-amber-300/90 bg-amber-50/90 text-amber-950 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-100 shadow-2xs">
             <div className="flex items-start gap-3">
-              <AlertTriangle className="size-5 text-amber-400 mt-0.5 shrink-0" />
+              <AlertTriangle className="size-5 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
               <div className="flex-1">
-                <AlertTitle className="text-amber-200 mb-1">
+                <AlertTitle className="text-amber-950 dark:text-amber-100 mb-1 font-semibold text-sm">
                   {t('tokenCorrupted')}
                 </AlertTitle>
-                <AlertDescription className="text-amber-100/80 text-sm">
+                <AlertDescription className="text-amber-900/90 dark:text-amber-200/90 text-xs leading-relaxed">
                   {statusMessage}
                 </AlertDescription>
                 <Button
                   onClick={handleReset}
                   disabled={resetting}
                   size="sm"
-                  className="mt-3 bg-amber-600 hover:bg-amber-700 text-white"
+                  className="mt-3 bg-amber-600 hover:bg-amber-700 text-white font-medium shadow-2xs"
                 >
                   {resetting ? (
                     <>
-                      <Loader2 className="size-4 animate-spin" />
+                      <Loader2 className="size-4 animate-spin mr-1.5" />
                       {t('resetting')}
                     </>
                   ) : (
                     <>
-                      <RotateCcw className="size-4" />
+                      <RotateCcw className="size-4 mr-1.5" />
                       {t('resetConfig')}
                     </>
                   )}
@@ -583,14 +594,14 @@ export function WhatsAppConfig() {
           </Alert>
         )}
 
-        {/* Last save failed — why, which field, and what to quote to Meta */}
+        {/* Last save failed */}
         {saveFailure && (
-          <Alert className="bg-red-950/30 border-red-700/50">
+          <Alert className="border-rose-300/90 bg-rose-50/90 text-rose-950 dark:border-rose-700/60 dark:bg-rose-950/40 dark:text-rose-100 shadow-2xs">
             <div className="flex items-start gap-3">
-              <XCircle className="size-5 text-red-400 mt-0.5 shrink-0" />
+              <XCircle className="size-5 text-rose-600 dark:text-rose-400 mt-0.5 shrink-0" />
               <div className="flex-1 min-w-0">
-                <AlertTitle className="text-red-200 mb-1">{t('lastSaveFailed')}</AlertTitle>
-                <AlertDescription className="text-red-100/80 text-sm">
+                <AlertTitle className="text-rose-950 dark:text-rose-100 mb-1 font-semibold text-sm">{t('lastSaveFailed')}</AlertTitle>
+                <AlertDescription className="text-rose-900/90 dark:text-rose-200/90 text-xs leading-relaxed">
                   {saveFailure.message}
                 </AlertDescription>
                 {saveFailure.meta && renderMetaDetails(saveFailure.meta)}
@@ -600,18 +611,33 @@ export function WhatsAppConfig() {
         )}
 
         {/* Connection Status */}
-        <Alert className="bg-card border-border">
-          <div className="flex items-center gap-2">
+        <Alert className={cn(
+          'border shadow-2xs transition-all',
+          connectionStatus === 'connected'
+            ? 'border-emerald-300/90 bg-emerald-50/80 text-emerald-950 dark:border-emerald-800/60 dark:bg-emerald-950/30 dark:text-emerald-100'
+            : 'border-rose-200 bg-rose-50/80 text-rose-950 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-100'
+        )}>
+          <div className="flex items-center gap-2.5">
             {connectionStatus === 'connected' ? (
-              <CheckCircle2 className="size-4 text-primary" />
+              <CheckCircle2 className="size-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
             ) : (
-              <XCircle className="size-4 text-red-500" />
+              <XCircle className="size-5 text-rose-600 dark:text-rose-400 shrink-0" />
             )}
-            <AlertTitle className="text-foreground mb-0">
+            <AlertTitle className={cn(
+              'mb-0 text-sm font-semibold tracking-tight',
+              connectionStatus === 'connected'
+                ? 'text-emerald-950 dark:text-emerald-200'
+                : 'text-rose-950 dark:text-rose-200'
+            )}>
               {connectionStatus === 'connected' ? t('credentialsValid') : t('notConnected')}
             </AlertTitle>
           </div>
-          <AlertDescription className="text-muted-foreground">
+          <AlertDescription className={cn(
+            'mt-1.5 text-xs leading-relaxed',
+            connectionStatus === 'connected'
+              ? 'text-emerald-800/90 dark:text-emerald-300/90'
+              : 'text-rose-900/90 dark:text-rose-300/90 font-normal'
+          )}>
             {connectionStatus === 'connected'
               ? t('connectedDesc')
               : statusMessage ||
@@ -619,12 +645,12 @@ export function WhatsAppConfig() {
           </AlertDescription>
           {connectionStatus === 'connected' && wabaSubscription?.checked && (
             <p
-              className={
-                'mt-1 text-xs ' +
-                (wabaSubscription.subscribed === false
-                  ? 'text-amber-300'
-                  : 'text-muted-foreground')
-              }
+              className={cn(
+                'mt-2 text-xs font-medium',
+                wabaSubscription.subscribed === false
+                  ? 'text-amber-700 dark:text-amber-400'
+                  : 'text-emerald-700 dark:text-emerald-400'
+              )}
             >
               {wabaSubscription.subscribed === false
                 ? t('wabaNotSubscribed')
@@ -636,30 +662,30 @@ export function WhatsAppConfig() {
           {connectionStatus !== 'connected' && statusMeta && renderMetaDetails(statusMeta)}
         </Alert>
 
-        {/* Registration Status — the "is it actually live?" check.
-            Credentials being valid is necessary but not sufficient;
-            without a successful /register call the number won't
-            receive inbound events. Surface this dimension separately
-            so users don't trust a misleading green banner. */}
+        {/* Registration Status — the "is it actually live?" check */}
         {config && (
           <Alert
-            className={
+            className={cn(
+              'border shadow-2xs transition-all',
               isRegistered
-                ? 'bg-emerald-950/30 border-emerald-700/50'
-                : 'bg-amber-950/30 border-amber-700/50'
-            }
+                ? 'border-emerald-300/90 bg-emerald-50/90 text-emerald-950 dark:border-emerald-700/60 dark:bg-emerald-950/40 dark:text-emerald-50'
+                : 'border-amber-300/90 bg-amber-50/90 text-amber-950 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-50'
+            )}
           >
-            <div className="flex items-center justify-between gap-2 flex-wrap">
-              <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2.5">
                 {isRegistered ? (
-                  <CheckCircle2 className="size-4 text-emerald-400" />
+                  <CheckCircle2 className="size-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                 ) : (
-                  <AlertTriangle className="size-4 text-amber-400" />
+                  <AlertTriangle className="size-5 text-amber-600 dark:text-amber-400 shrink-0" />
                 )}
                 <AlertTitle
-                  className={
-                    'mb-0 ' + (isRegistered ? 'text-emerald-200' : 'text-amber-200')
-                  }
+                  className={cn(
+                    'mb-0 text-sm font-semibold tracking-tight',
+                    isRegistered
+                      ? 'text-emerald-950 dark:text-emerald-100'
+                      : 'text-amber-950 dark:text-amber-100'
+                  )}
                 >
                   {isRegistered
                     ? t('registered')
@@ -671,17 +697,27 @@ export function WhatsAppConfig() {
                 size="sm"
                 onClick={handleVerifyRegistration}
                 disabled={verifyingRegistration}
-                className="border-border bg-transparent text-foreground hover:bg-muted h-7"
+                className={cn(
+                  'h-8 px-3 text-xs font-semibold shadow-2xs transition-colors',
+                  isRegistered
+                    ? 'border-emerald-300 bg-white text-emerald-900 hover:bg-emerald-100 hover:text-emerald-950 dark:border-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-100 dark:hover:bg-emerald-900'
+                    : 'border-amber-300 bg-white text-amber-950 hover:bg-amber-100 hover:text-amber-950 dark:border-amber-700 dark:bg-amber-900/50 dark:text-amber-100 dark:hover:bg-amber-900'
+                )}
               >
                 {verifyingRegistration ? (
-                  <Loader2 className="size-3.5 animate-spin" />
+                  <Loader2 className="size-3.5 animate-spin mr-1.5" />
                 ) : (
-                  <Zap className="size-3.5" />
+                  <Zap className="size-3.5 mr-1.5" />
                 )}
                 {t('verifyWithMeta')}
               </Button>
             </div>
-            <AlertDescription className="text-muted-foreground mt-2 text-xs leading-relaxed">
+            <AlertDescription className={cn(
+              'mt-2.5 text-xs leading-relaxed',
+              isRegistered
+                ? 'text-emerald-900/90 dark:text-emerald-200/90'
+                : 'text-amber-900/90 dark:text-amber-200/90'
+            )}>
               {isRegistered ? (
                 <span
                   dangerouslySetInnerHTML={{
@@ -695,7 +731,7 @@ export function WhatsAppConfig() {
               ) : lastRegistrationError ? (
                 <>
                   {t('lastAttemptFailed')}
-                  <span className="text-red-300">
+                  <span className="font-semibold text-rose-700 dark:text-rose-400">
                     &quot;{lastRegistrationError}&quot;
                   </span>
                   . {t('retryHint')}
@@ -706,29 +742,32 @@ export function WhatsAppConfig() {
             </AlertDescription>
 
             {registrationProbe && (
-              <div className="mt-3 rounded border border-border bg-card/60 px-3 py-2 space-y-1.5 text-[11px]">
-                <p className="font-medium text-foreground">
-                  {t('diagnosticLastRun')}
-                  <span className={registrationProbe.live ? 'text-emerald-400' : 'text-amber-400'}>
+              <div className="mt-3.5 rounded-lg border border-emerald-200 bg-white/95 p-3.5 space-y-2 text-xs shadow-2xs dark:border-emerald-800/60 dark:bg-background/90">
+                <p className="font-semibold text-foreground flex items-center justify-between">
+                  <span>{t('diagnosticLastRun')}</span>
+                  <span className={cn(
+                    'px-2 py-0.5 rounded-full text-[11px] font-bold',
+                    registrationProbe.live ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300'
+                  )}>
                     {registrationProbe.live ? t('live') : t('notLive')}
                   </span>
                 </p>
-                <ul className="space-y-0.5 text-muted-foreground">
+                <ul className="space-y-1 text-foreground/80 dark:text-muted-foreground pt-1">
                   {Object.entries(registrationProbe.checks).map(([k, v]) => (
-                    <li key={k} className="flex items-center gap-1.5">
+                    <li key={k} className="flex items-center gap-2">
                       {v === true ? (
-                        <CheckCircle2 className="size-3 text-emerald-400 shrink-0" />
+                        <CheckCircle2 className="size-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                       ) : v === false ? (
-                        <XCircle className="size-3 text-red-400 shrink-0" />
+                        <XCircle className="size-3.5 text-rose-600 dark:text-rose-400 shrink-0" />
                       ) : (
-                        <span className="size-3 rounded-full border border-border shrink-0" />
+                        <span className="size-3.5 rounded-full border border-border shrink-0" />
                       )}
-                      <code className="text-muted-foreground">{k}</code>
+                      <code className="text-foreground font-mono text-[11px] font-medium">{k}</code>
                     </li>
                   ))}
                 </ul>
                 {(registrationProbe.errors ?? []).length > 0 && (
-                  <ul className="pt-1 space-y-0.5 text-red-300">
+                  <ul className="pt-2 space-y-1 text-rose-700 dark:text-rose-300 border-t border-border/60 text-xs">
                     {registrationProbe.errors?.map((e, i) => (
                       <li key={i}>• {e}</li>
                     ))}
@@ -740,36 +779,36 @@ export function WhatsAppConfig() {
         )}
 
         {/* API Credentials */}
-        <Card>
+        <Card className="border-border/80 shadow-2xs">
           <CardHeader>
-            <CardTitle className="text-foreground">{t('apiCredentialsTitle')}</CardTitle>
-            <CardDescription className="text-muted-foreground">
+            <CardTitle className="text-foreground text-base font-semibold tracking-tight">{t('apiCredentialsTitle')}</CardTitle>
+            <CardDescription className="text-foreground/70 dark:text-muted-foreground text-xs leading-relaxed">
               {t('apiCredentialsDesc')}
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label className="text-muted-foreground">{t('phoneNumberId')}</Label>
+          <CardContent className="space-y-5">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-foreground tracking-tight">{t('phoneNumberId')}</Label>
               <Input
                 placeholder={t('phoneNumberIdPlaceholder')}
                 value={phoneNumberId}
                 onChange={(e) => setPhoneNumberId(e.target.value)}
-                className="bg-muted border-border text-foreground placeholder:text-muted-foreground"
+                className="bg-background border-input text-foreground font-mono text-sm shadow-2xs placeholder:text-muted-foreground/60 focus-visible:ring-1 focus-visible:ring-primary"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-muted-foreground">{t('wabaId')}</Label>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-foreground tracking-tight">{t('wabaId')}</Label>
               <Input
                 placeholder={t('wabaIdPlaceholder')}
                 value={wabaId}
                 onChange={(e) => setWabaId(e.target.value)}
-                className="bg-muted border-border text-foreground placeholder:text-muted-foreground"
+                className="bg-background border-input text-foreground font-mono text-sm shadow-2xs placeholder:text-muted-foreground/60 focus-visible:ring-1 focus-visible:ring-primary"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-muted-foreground">{t('accessToken')}</Label>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-foreground tracking-tight">{t('accessToken')}</Label>
               <div className="relative">
                 <Input
                   type={showToken ? 'text' : 'password'}
@@ -785,25 +824,26 @@ export function WhatsAppConfig() {
                       setTokenEdited(true);
                     }
                   }}
-                  className="bg-muted border-border text-foreground placeholder:text-muted-foreground pr-10"
+                  className="bg-background border-input text-foreground font-mono text-sm shadow-2xs placeholder:text-muted-foreground/60 focus-visible:ring-1 focus-visible:ring-primary pr-10"
                 />
                 <button
                   type="button"
                   onClick={() => setShowToken(!showToken)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1"
+                  aria-label={showToken ? 'Hide token' : 'Show token'}
                 >
                   {showToken ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                 </button>
               </div>
               {config && !tokenEdited && (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-foreground/70 dark:text-muted-foreground leading-relaxed">
                   {t('tokenHidden')}
                 </p>
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-muted-foreground">{t('webhookVerifyToken')}</Label>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-foreground tracking-tight">{t('webhookVerifyToken')}</Label>
               <Input
                 placeholder={t('webhookVerifyTokenPlaceholder')}
                 value={verifyToken}
@@ -817,19 +857,19 @@ export function WhatsAppConfig() {
                     setVerifyEdited(true);
                   }
                 }}
-                className="bg-muted border-border text-foreground placeholder:text-muted-foreground"
+                className="bg-background border-input text-foreground font-mono text-sm shadow-2xs placeholder:text-muted-foreground/60 focus-visible:ring-1 focus-visible:ring-primary"
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-foreground/70 dark:text-muted-foreground leading-relaxed">
                 {config?.verify_token && !verifyEdited
                   ? t('webhookVerifyTokenSaved')
                   : t('webhookVerifyTokenHint')}
               </p>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-muted-foreground">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-foreground tracking-tight">
                 {t('twoStepPin')}
-                <span className="ml-1 text-muted-foreground">{t('optional')}</span>
+                <span className="ml-1 font-normal text-muted-foreground">({t('optional')})</span>
               </Label>
               <Input
                 type="text"
@@ -840,9 +880,9 @@ export function WhatsAppConfig() {
                 onChange={(e) =>
                   setPin(e.target.value.replace(/\D/g, '').slice(0, 6))
                 }
-                className="bg-muted border-border text-foreground placeholder:text-muted-foreground tracking-widest"
+                className="bg-background border-input text-foreground font-mono text-sm shadow-2xs placeholder:text-muted-foreground/60 focus-visible:ring-1 focus-visible:ring-primary tracking-widest"
               />
-              <p className="text-xs text-muted-foreground leading-relaxed">
+              <p className="text-xs text-foreground/75 dark:text-muted-foreground leading-relaxed">
                 <span dangerouslySetInnerHTML={{ __html: t('pinHint') }} />
               </p>
             </div>
@@ -850,27 +890,27 @@ export function WhatsAppConfig() {
         </Card>
 
         {/* Webhook URL */}
-        <Card>
+        <Card className="border-border/80 shadow-2xs">
           <CardHeader>
-            <CardTitle className="text-foreground">{t('webhookTitle')}</CardTitle>
-            <CardDescription className="text-muted-foreground">
+            <CardTitle className="text-foreground text-base font-semibold tracking-tight">{t('webhookTitle')}</CardTitle>
+            <CardDescription className="text-foreground/70 dark:text-muted-foreground text-xs leading-relaxed">
               {t('webhookDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              <Label className="text-muted-foreground">{t('webhookUrl')}</Label>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-foreground tracking-tight">{t('webhookUrl')}</Label>
               <div className="flex gap-2">
                 <Input
                   readOnly
                   value={webhookUrl}
-                  className="bg-muted border-border text-muted-foreground font-mono text-sm"
+                  className="bg-muted/40 border-input text-foreground font-mono text-xs font-medium select-all shadow-2xs"
                 />
                 <Button
                   variant="outline"
                   size="icon"
                   onClick={handleCopyWebhookUrl}
-                  className="shrink-0 border-border text-muted-foreground hover:text-foreground hover:bg-muted"
+                  className="shrink-0 border-input bg-background text-foreground hover:bg-muted shadow-2xs"
                 >
                   <Copy className="size-4" />
                 </Button>
@@ -879,28 +919,26 @@ export function WhatsAppConfig() {
           </CardContent>
         </Card>
 
-        {/* Attachment retention. Only meaningful once a number is
-            connected, since it governs what the webhook does with
-            inbound media. */}
+        {/* Attachment retention */}
         {config && (
-          <Card>
+          <Card className="border-border/80 shadow-2xs">
             <CardHeader>
-              <CardTitle className="text-foreground">{t('mediaTitle')}</CardTitle>
-              <CardDescription className="text-muted-foreground">
+              <CardTitle className="text-foreground text-base font-semibold tracking-tight">{t('mediaTitle')}</CardTitle>
+              <CardDescription className="text-foreground/70 dark:text-muted-foreground text-xs leading-relaxed">
                 {t('mediaDesc')}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-between gap-4 rounded-md border border-border p-3">
+              <div className="flex items-center justify-between gap-4 rounded-lg border border-border/70 bg-muted/20 p-4">
                 <div>
-                  <p className="text-sm font-medium text-foreground">
+                  <p className="text-sm font-semibold text-foreground">
                     {t('mirrorInbound')}
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-foreground/70 dark:text-muted-foreground leading-relaxed mt-0.5">
                     {t('mirrorInboundDesc')}
                   </p>
                   {!mirrorMedia && (
-                    <p className="mt-1 text-xs text-amber-600 dark:text-amber-500">
+                    <p className="mt-1.5 text-xs text-amber-700 dark:text-amber-400 font-medium">
                       {t('mirrorInboundOffWarning')}
                     </p>
                   )}
@@ -917,15 +955,15 @@ export function WhatsAppConfig() {
         )}
 
         {/* Action Buttons */}
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap items-center gap-3 pt-2">
           <Button
             onClick={handleSave}
             disabled={saving}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-4 shadow-2xs"
           >
             {saving ? (
               <>
-                <Loader2 className="size-4 animate-spin" />
+                <Loader2 className="size-4 animate-spin mr-2" />
                 {t('saving')}
               </>
             ) : (
@@ -936,16 +974,16 @@ export function WhatsAppConfig() {
             variant="outline"
             onClick={handleTestConnection}
             disabled={testing || !config}
-            className="border-border text-muted-foreground hover:text-foreground hover:bg-muted"
+            className="border-input bg-background text-foreground hover:bg-muted font-medium px-4 shadow-2xs"
           >
             {testing ? (
               <>
-                <Loader2 className="size-4 animate-spin" />
+                <Loader2 className="size-4 animate-spin mr-2" />
                 {t('testing')}
               </>
             ) : (
               <>
-                <Zap className="size-4" />
+                <Zap className="size-4 mr-2 text-primary" />
                 {t('testConnection')}
               </>
             )}
@@ -955,16 +993,16 @@ export function WhatsAppConfig() {
               variant="outline"
               onClick={handleReset}
               disabled={resetting}
-              className="border-red-900 text-red-400 hover:text-red-300 hover:bg-red-950/40"
+              className="border-rose-200 bg-rose-50/60 text-rose-700 hover:bg-rose-100 hover:text-rose-800 font-medium px-4 shadow-2xs dark:border-rose-900/50 dark:bg-rose-950/25 dark:text-rose-400 dark:hover:bg-rose-900/40"
             >
               {resetting ? (
                 <>
-                  <Loader2 className="size-4 animate-spin" />
+                  <Loader2 className="size-4 animate-spin mr-2" />
                   {t('resetting')}
                 </>
               ) : (
                 <>
-                  <RotateCcw className="size-4" />
+                  <RotateCcw className="size-4 mr-2" />
                   {t('resetConfig')}
                 </>
               )}
@@ -975,24 +1013,24 @@ export function WhatsAppConfig() {
 
       {/* Setup Instructions Sidebar */}
       <div>
-        <Card>
+        <Card className="border-border/80 shadow-2xs sticky top-4">
           <CardHeader>
-            <CardTitle className="text-foreground text-base">{t('setupInstructions')}</CardTitle>
-            <CardDescription className="text-muted-foreground">
+            <CardTitle className="text-foreground text-sm font-semibold tracking-tight">{t('setupInstructions')}</CardTitle>
+            <CardDescription className="text-foreground/70 dark:text-muted-foreground text-xs leading-relaxed mt-0.5">
               {t('setupInstructionsDesc')}
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <Accordion>
-              <AccordionItem className="border-border">
-                <AccordionTrigger className="text-muted-foreground hover:text-foreground hover:no-underline">
-                  <span className="flex items-center gap-2">
-                    <span className="flex size-5 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">1</span>
-                    {t('step1')}
+              <AccordionItem className="border-border/70">
+                <AccordionTrigger className="text-xs font-semibold text-foreground hover:text-primary transition-colors hover:no-underline py-2.5">
+                  <span className="flex items-center gap-2.5 text-left">
+                    <span className="flex size-5.5 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground shrink-0 shadow-2xs">1</span>
+                    <span>{t('step1')}</span>
                   </span>
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground">
-                  <ol className="list-decimal list-inside space-y-1 text-sm">
+                <AccordionContent className="text-foreground/80 dark:text-muted-foreground text-xs leading-relaxed pb-3 pl-8">
+                  <ol className="list-decimal list-outside space-y-1.5 ml-4">
                     <li dangerouslySetInnerHTML={{ __html: t('step1_1') }} />
                     <li>{t('step1_2')}</li>
                     <li>{t('step1_3')}</li>
@@ -1001,15 +1039,15 @@ export function WhatsAppConfig() {
                 </AccordionContent>
               </AccordionItem>
 
-              <AccordionItem className="border-border">
-                <AccordionTrigger className="text-muted-foreground hover:text-foreground hover:no-underline">
-                  <span className="flex items-center gap-2">
-                    <span className="flex size-5 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">2</span>
-                    {t('step2')}
+              <AccordionItem className="border-border/70">
+                <AccordionTrigger className="text-xs font-semibold text-foreground hover:text-primary transition-colors hover:no-underline py-2.5">
+                  <span className="flex items-center gap-2.5 text-left">
+                    <span className="flex size-5.5 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground shrink-0 shadow-2xs">2</span>
+                    <span>{t('step2')}</span>
                   </span>
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground">
-                  <ol className="list-decimal list-inside space-y-1 text-sm">
+                <AccordionContent className="text-foreground/80 dark:text-muted-foreground text-xs leading-relaxed pb-3 pl-8">
+                  <ol className="list-decimal list-outside space-y-1.5 ml-4">
                     <li>{t('step2_1')}</li>
                     <li>{t('step2_2')}</li>
                     <li>{t('step2_3')}</li>
@@ -1017,15 +1055,15 @@ export function WhatsAppConfig() {
                 </AccordionContent>
               </AccordionItem>
 
-              <AccordionItem className="border-border">
-                <AccordionTrigger className="text-muted-foreground hover:text-foreground hover:no-underline">
-                  <span className="flex items-center gap-2">
-                    <span className="flex size-5 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">3</span>
-                    {t('step3')}
+              <AccordionItem className="border-border/70">
+                <AccordionTrigger className="text-xs font-semibold text-foreground hover:text-primary transition-colors hover:no-underline py-2.5">
+                  <span className="flex items-center gap-2.5 text-left">
+                    <span className="flex size-5.5 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground shrink-0 shadow-2xs">3</span>
+                    <span>{t('step3')}</span>
                   </span>
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground">
-                  <ol className="list-decimal list-inside space-y-1 text-sm">
+                <AccordionContent className="text-foreground/80 dark:text-muted-foreground text-xs leading-relaxed pb-3 pl-8">
+                  <ol className="list-decimal list-outside space-y-1.5 ml-4">
                     <li>{t('step3_1')}</li>
                     <li dangerouslySetInnerHTML={{ __html: t.raw('step3_2') }} />
                     <li dangerouslySetInnerHTML={{ __html: t.raw('step3_3') }} />
@@ -1034,15 +1072,15 @@ export function WhatsAppConfig() {
                 </AccordionContent>
               </AccordionItem>
 
-              <AccordionItem className="border-border">
-                <AccordionTrigger className="text-muted-foreground hover:text-foreground hover:no-underline">
-                  <span className="flex items-center gap-2">
-                    <span className="flex size-5 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">4</span>
-                    {t('step4')}
+              <AccordionItem className="border-border/70">
+                <AccordionTrigger className="text-xs font-semibold text-foreground hover:text-primary transition-colors hover:no-underline py-2.5">
+                  <span className="flex items-center gap-2.5 text-left">
+                    <span className="flex size-5.5 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground shrink-0 shadow-2xs">4</span>
+                    <span>{t('step4')}</span>
                   </span>
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground">
-                  <ol className="list-decimal list-inside space-y-1 text-sm">
+                <AccordionContent className="text-foreground/80 dark:text-muted-foreground text-xs leading-relaxed pb-3 pl-8">
+                  <ol className="list-decimal list-outside space-y-1.5 ml-4">
                     <li>{t('step4_1')}</li>
                     <li>{t('step4_2')}</li>
                     <li dangerouslySetInnerHTML={{ __html: t.raw('step4_3') }} />
@@ -1053,12 +1091,12 @@ export function WhatsAppConfig() {
               </AccordionItem>
             </Accordion>
 
-            <div className="mt-4 pt-4 border-t border-border">
+            <div className="pt-3 border-t border-border/70">
               <a
                 href="https://developers.facebook.com/docs/whatsapp/cloud-api/get-started"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-sm text-primary hover:text-primary/80 transition-colors"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary/80 hover:underline transition-colors"
               >
                 <ExternalLink className="size-3.5" />
                 {t('metaDocs')}
