@@ -29,7 +29,7 @@ import { BrandMark } from "@/components/layout/brand-logo";
 
 export function CrmBottomNav() {
   const pathname = usePathname();
-  const { accountRole, signOut, profile } = useAuth();
+  const { accountRole, signOut, profile, account } = useAuth();
   const totalUnread = useTotalUnread();
   const [moreSheetOpen, setMoreSheetOpen] = useState(false);
 
@@ -44,8 +44,15 @@ export function CrmBottomNav() {
     { href: "/pipelines", label: "Pipelines", icon: GitBranch },
     { href: "/broadcasts", label: "Broadcasts", icon: Radio },
     { href: "/catalog", label: "Business Catalog", icon: Package },
-    { href: "/agency", label: "Agency Operations", icon: Megaphone },
-    { href: "/dental", label: "Dental Clinic", icon: Stethoscope },
+    ...(account?.business_type === "digital_agency" ||
+    account?.business_type === "digital_solutions" ||
+    account?.business_type === "marketing_tech_agency"
+      ? [{ href: "/agency", label: "Agency Operations", icon: Megaphone }]
+      : []),
+    // Dental Clinic Management should NOT show in other business types
+    ...(account?.business_type === "dental"
+      ? [{ href: "/dental", label: "Dental Clinic", icon: Stethoscope }]
+      : []),
     { href: "/agents", label: "AI Sales Agents", icon: Bot },
     { href: "/flows", label: "AI Flows", icon: Workflow },
     { href: "/website", label: "Website CMS", icon: Globe },
@@ -188,3 +195,4 @@ export function CrmBottomNav() {
     </>
   );
 }
+

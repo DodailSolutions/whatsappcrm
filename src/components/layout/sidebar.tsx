@@ -240,7 +240,23 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
         {/* Main navigation */}
         <nav className="flex-1 overflow-y-auto px-3 py-4">
           <ul className="flex flex-col gap-1">
-            {navItems.map((item) => {
+            {navItems
+              .filter((item) => {
+                // Dental Clinic Management should NOT show in other business types
+                if (item.href === "/dental") {
+                  return account?.business_type === "dental";
+                }
+                // Agency Hub should only show for digital agencies and tech solutions
+                if (item.href === "/agency") {
+                  return (
+                    account?.business_type === "digital_agency" ||
+                    account?.business_type === "digital_solutions" ||
+                    account?.business_type === "marketing_tech_agency"
+                  );
+                }
+                return true;
+              })
+              .map((item) => {
               const isActive =
                 pathname === item.href ||
                 (item.href !== "/dashboard" && pathname.startsWith(item.href));

@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +38,7 @@ import {
 import type { TreatmentPlan, PatientTimelineEvent, Invoice } from "@/types/business";
 
 export default function DentalPage() {
+  const { account, profileLoading } = useAuth();
   const [activeTab, setActiveTab] = useState<"dashboard" | "patients" | "plans" | "recalls" | "billing">("dashboard");
   const [loading, setLoading] = useState(true);
 
@@ -241,6 +244,37 @@ export default function DentalPage() {
       console.error(err);
     }
   };
+
+  if (!profileLoading && account?.business_type && account.business_type !== "dental") {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center p-6">
+        <div className="max-w-md w-full rounded-2xl border border-border bg-card p-8 text-center space-y-5 shadow-lg">
+          <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-500">
+            <AlertCircle className="size-7" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-lg font-bold text-foreground">Dental Clinic Module Restricted</h2>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Dental Clinic Management is only available for Dental Clinic workspaces. Your current workspace is configured as{" "}
+              <strong className="capitalize text-foreground">{account.business_type.replace(/_/g, " ")}</strong>.
+            </p>
+          </div>
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link href="/dashboard" className="w-full sm:w-auto">
+              <Button size="sm" className="w-full text-xs font-semibold">
+                Go to Dashboard
+              </Button>
+            </Link>
+            <Link href="/settings" className="w-full sm:w-auto">
+              <Button size="sm" variant="outline" className="w-full text-xs font-semibold">
+                Workspace Settings
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 p-6">
