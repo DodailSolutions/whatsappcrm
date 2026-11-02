@@ -39,12 +39,24 @@ export async function GET() {
       business_types: {
         ...DEFAULT_LANDING_CMS.business_types,
         ...(raw.business_types || {}),
-        filter_categories: raw.business_types?.filter_categories?.length
-          ? raw.business_types.filter_categories
-          : DEFAULT_LANDING_CMS.business_types.filter_categories,
-        cards: raw.business_types?.cards?.length
-          ? raw.business_types.cards
-          : DEFAULT_LANDING_CMS.business_types.cards,
+        filter_categories: (() => {
+          const rawCats: string[] = raw.business_types?.filter_categories || [];
+          if (!rawCats.length) return DEFAULT_LANDING_CMS.business_types.filter_categories;
+          const set = new Set(rawCats);
+          return [
+            ...rawCats,
+            ...DEFAULT_LANDING_CMS.business_types.filter_categories.filter(c => !set.has(c)),
+          ];
+        })(),
+        cards: (() => {
+          const rawCards = raw.business_types?.cards || [];
+          if (!rawCards.length) return DEFAULT_LANDING_CMS.business_types.cards;
+          const idSet = new Set(rawCards.map((c: any) => c.id));
+          return [
+            ...rawCards,
+            ...DEFAULT_LANDING_CMS.business_types.cards.filter(c => !idSet.has(c.id)),
+          ];
+        })(),
       },
       features: {
         ...DEFAULT_LANDING_CMS.features,

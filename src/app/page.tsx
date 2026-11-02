@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BrandMark } from "@/components/layout/brand-logo";
 import { DEFAULT_LANDING_CMS, type LandingPageCMS } from "@/lib/cms/default-landing-cms";
 import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
 import {
   Home,
   MessageSquare,
@@ -23,6 +24,8 @@ import {
   Zap,
   Users,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Layers,
   Clock,
   Play,
@@ -38,6 +41,12 @@ import {
   Menu,
   X,
   Megaphone,
+  ShoppingBag,
+  GraduationCap,
+  Hotel,
+  Briefcase,
+  Factory,
+  Code2,
 } from "lucide-react";
 
 export default function LandingPage() {
@@ -75,6 +84,12 @@ export default function LandingPage() {
     loadLandingData();
   }, []);
 
+  // Carousel state & ref
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+  const [activeCardIndex, setActiveCardIndex] = useState(0);
+
   // Filter business cards
   const filteredCards = cms.business_types.cards.filter((card) => {
     if (!card.enabled) return false;
@@ -82,12 +97,54 @@ export default function LandingPage() {
     if (selectedCategory === "Dental") return card.id === "dental";
     if (selectedCategory === "Laundry") return card.id === "laundry";
     if (selectedCategory === "Digital Marketing") return card.id === "digital_marketing";
+    if (selectedCategory === "Software & Tech") return card.id === "digital_solutions";
     if (selectedCategory === "Rental Car") return card.id === "rental_car";
     if (selectedCategory === "Pet Shop") return card.id === "pet_shop";
     if (selectedCategory === "Real Estate") return card.id === "real_estate";
     if (selectedCategory === "Healthcare") return card.id === "healthcare";
+    if (selectedCategory === "Ecommerce") return card.id === "ecommerce";
+    if (selectedCategory === "Education") return card.id === "education";
+    if (selectedCategory === "Hotels") return card.id === "hospitality";
+    if (selectedCategory === "Consulting") return card.id === "services";
+    if (selectedCategory === "B2B Manufacturing") return card.id === "manufacturing";
     return true;
   });
+
+  const checkScrollPosition = useCallback(() => {
+    if (!carouselRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current;
+    setCanScrollLeft(scrollLeft > 10);
+    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+    const cardWidth = 330;
+    const index = Math.round(scrollLeft / cardWidth);
+    setActiveCardIndex(Math.max(0, Math.min(index, filteredCards.length - 1)));
+  }, [filteredCards.length]);
+
+  useEffect(() => {
+    const el = carouselRef.current;
+    if (!el) return;
+    checkScrollPosition();
+    el.addEventListener("scroll", checkScrollPosition, { passive: true });
+    return () => el.removeEventListener("scroll", checkScrollPosition);
+  }, [checkScrollPosition]);
+
+  const scrollCarousel = (direction: "left" | "right") => {
+    if (!carouselRef.current) return;
+    const scrollAmount = 340;
+    carouselRef.current.scrollBy({
+      left: direction === "left" ? -scrollAmount : scrollAmount,
+      behavior: "smooth",
+    });
+  };
+
+  const scrollToCard = (index: number) => {
+    if (!carouselRef.current) return;
+    const cardWidth = 340;
+    carouselRef.current.scrollTo({
+      left: index * cardWidth,
+      behavior: "smooth",
+    });
+  };
 
   // Dynamic icon helper
   const getIcon = (iconName: string) => {
@@ -98,12 +155,26 @@ export default function LandingPage() {
         return Shirt;
       case "Megaphone":
         return Megaphone;
+      case "Code2":
+        return Code2;
       case "Car":
         return Car;
       case "Dog":
         return Dog;
       case "Building2":
         return Building2;
+      case "ShoppingBag":
+        return ShoppingBag;
+      case "GraduationCap":
+        return GraduationCap;
+      case "Hotel":
+        return Hotel;
+      case "Briefcase":
+        return Briefcase;
+      case "Factory":
+        return Factory;
+      case "Layers":
+        return Layers;
       case "MessageSquare":
         return MessageSquare;
       case "Bot":
@@ -504,31 +575,79 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 4. BUSINESS TYPES SECTION */}
-      <section id="business-types" className="py-20 bg-[#FAFAFA] dark:bg-background">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8">
-          <div className="text-center space-y-3">
-            <Badge variant="outline" className="border-orange-500/20 bg-orange-500/10 text-[#F15A22] text-xs font-bold">
-              {cms.business_types.badge}
-            </Badge>
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
-              {cms.business_types.title}
-            </h2>
-            <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
-              {cms.business_types.subtitle}
-            </p>
+      {/* 4. BUSINESS TYPES CAROUSEL SECTION */}
+      <section id="business-types" className="py-20 bg-[#FAFAFA] dark:bg-background relative overflow-hidden">
+        {/* Soft decorative background glow */}
+        <div className="absolute top-1/2 left-0 -translate-y-1/2 w-96 h-96 bg-orange-500/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-1/2 right-0 -translate-y-1/2 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8 relative">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div className="space-y-3 max-w-2xl">
+              <Badge variant="outline" className="border-orange-500/20 bg-orange-500/10 text-[#F15A22] text-xs font-bold">
+                {cms.business_types.badge}
+              </Badge>
+              <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
+                {cms.business_types.title}
+              </h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {cms.business_types.subtitle}
+              </p>
+            </div>
+
+            {/* Desktop Navigation Arrow Buttons & Counter */}
+            <div className="flex items-center gap-3 self-start md:self-end">
+              <div className="text-xs font-semibold text-muted-foreground mr-1">
+                <span className="text-foreground font-bold">{filteredCards.length}</span> Industries Available
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => scrollCarousel("left")}
+                  disabled={!canScrollLeft}
+                  aria-label="Previous business type"
+                  className={cn(
+                    "flex size-10 items-center justify-center rounded-full border border-border bg-white dark:bg-card shadow-xs transition-all duration-200",
+                    canScrollLeft
+                      ? "text-foreground hover:bg-orange-50 hover:border-orange-500/40 hover:text-[#F15A22] active:scale-95 cursor-pointer"
+                      : "opacity-40 text-muted-foreground cursor-not-allowed"
+                  )}
+                >
+                  <ChevronLeft className="size-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => scrollCarousel("right")}
+                  disabled={!canScrollRight}
+                  aria-label="Next business type"
+                  className={cn(
+                    "flex size-10 items-center justify-center rounded-full border border-border bg-white dark:bg-card shadow-xs transition-all duration-200",
+                    canScrollRight
+                      ? "text-foreground hover:bg-orange-50 hover:border-orange-500/40 hover:text-[#F15A22] active:scale-95 cursor-pointer"
+                      : "opacity-40 text-muted-foreground cursor-not-allowed"
+                  )}
+                >
+                  <ChevronRight className="size-5" />
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Interactive Category Filter Pills */}
-          <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {cms.business_types.filter_categories.map((cat, i) => (
               <button
                 key={i}
-                onClick={() => setSelectedCategory(cat)}
-                className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${
+                onClick={() => {
+                  setSelectedCategory(cat);
+                  if (carouselRef.current) {
+                    carouselRef.current.scrollTo({ left: 0, behavior: "smooth" });
+                  }
+                }}
+                className={`rounded-full px-4 py-2 text-xs font-semibold shrink-0 transition-all cursor-pointer ${
                   selectedCategory === cat
                     ? "bg-[#F15A22] text-white shadow-sm"
-                    : "bg-white dark:bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    : "bg-white dark:bg-card border border-border/80 text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 }`}
               >
                 {cat}
@@ -536,40 +655,97 @@ export default function LandingPage() {
             ))}
           </div>
 
-          {/* Business Type Cards Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 pt-4">
-            {filteredCards.slice(0, 5).map((card) => {
-              const Icon = getIcon(card.icon);
-              const colorClass = getBadgeColorStyles(card.badge_color);
-              return (
-                <div
-                  key={card.id}
-                  className="rounded-2xl border border-border bg-white dark:bg-card p-5 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between"
-                >
-                  <div className="space-y-4">
-                    <div className={`flex size-11 items-center justify-center rounded-xl border ${colorClass}`}>
-                      <Icon className="size-5" />
+          {/* Business Types Carousel Track */}
+          <div className="relative">
+            <div
+              ref={carouselRef}
+              className="flex gap-5 overflow-x-auto scroll-smooth snap-x snap-mandatory py-4 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
+              {filteredCards.map((card) => {
+                const Icon = getIcon(card.icon);
+                const colorClass = getBadgeColorStyles(card.badge_color);
+                return (
+                  <div
+                    key={card.id}
+                    className="w-[280px] sm:w-[320px] shrink-0 snap-start rounded-2xl border border-border/80 bg-white dark:bg-card p-6 shadow-xs hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group"
+                  >
+                    <div className="space-y-4">
+                      <div className={`flex size-12 items-center justify-center rounded-2xl border ${colorClass} transition-transform group-hover:scale-105 duration-300 shadow-2xs`}>
+                        <Icon className="size-6" />
+                      </div>
+                      <div>
+                        <h3 className="text-base font-bold text-foreground tracking-tight group-hover:text-[#F15A22] transition-colors">
+                          {card.name}
+                        </h3>
+                        <p className="text-xs text-muted-foreground mt-2 leading-relaxed line-clamp-3">
+                          {card.description}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-sm font-bold text-foreground">{card.name}</h3>
-                      <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
-                        {card.description}
-                      </p>
-                    </div>
-                  </div>
 
-                  <div className="pt-4 mt-4 border-t border-border/60">
-                    <Link
-                      href={card.cta_url}
-                      className="inline-flex items-center text-xs font-bold text-[#F15A22] hover:underline"
-                    >
-                      {card.cta_text}
-                      <ArrowRight className="ml-1 size-3.5" />
-                    </Link>
+                    <div className="pt-4 mt-6 border-t border-border/60">
+                      <Link
+                        href={card.cta_url}
+                        className="inline-flex items-center text-xs font-bold text-[#F15A22] hover:text-[#d94a15] transition-colors group-hover:translate-x-0.5 duration-200"
+                      >
+                        {card.cta_text}
+                        <ArrowRight className="ml-1.5 size-3.5 transition-transform group-hover:translate-x-1" />
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Carousel Progress Bar & Mobile Navigation Controls */}
+          <div className="flex items-center justify-between pt-2">
+            <div className="flex items-center gap-1.5 flex-wrap max-w-[70%]">
+              {filteredCards.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => scrollToCard(idx)}
+                  aria-label={`Go to slide ${idx + 1}`}
+                  className={cn(
+                    "h-1.5 rounded-full transition-all duration-300 cursor-pointer",
+                    activeCardIndex === idx
+                      ? "w-8 bg-[#F15A22]"
+                      : "w-2 bg-border hover:bg-muted-foreground/40"
+                  )}
+                />
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2 md:hidden">
+              <button
+                type="button"
+                onClick={() => scrollCarousel("left")}
+                disabled={!canScrollLeft}
+                aria-label="Previous business type"
+                className={cn(
+                  "flex size-9 items-center justify-center rounded-full border border-border bg-white dark:bg-card shadow-xs transition-colors",
+                  canScrollLeft
+                    ? "text-foreground hover:bg-orange-50 hover:text-[#F15A22]"
+                    : "opacity-40 text-muted-foreground"
+                )}
+              >
+                <ChevronLeft className="size-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollCarousel("right")}
+                disabled={!canScrollRight}
+                aria-label="Next business type"
+                className={cn(
+                  "flex size-9 items-center justify-center rounded-full border border-border bg-white dark:bg-card shadow-xs transition-colors",
+                  canScrollRight
+                    ? "text-foreground hover:bg-orange-50 hover:text-[#F15A22]"
+                    : "opacity-40 text-muted-foreground"
+                )}
+              >
+                <ChevronRight className="size-4" />
+              </button>
+            </div>
           </div>
         </div>
       </section>
