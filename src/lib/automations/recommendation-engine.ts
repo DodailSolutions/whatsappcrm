@@ -1,8 +1,8 @@
 import type { BusinessType, OperatingModel } from "@/types/business";
-import { getAllAiFollowupTemplates, type AIFollowupTemplate } from "@/lib/automations/ai-followup-templates";
+import { getAllAiFollowupTemplates, type AiFollowupTemplate } from "@/lib/automations/ai-followup-templates";
 
 export interface TemplateRecommendation {
-  template: AIFollowupTemplate;
+  template: AiFollowupTemplate;
   relevanceScore: number;
   badge: string;
   reason: string;

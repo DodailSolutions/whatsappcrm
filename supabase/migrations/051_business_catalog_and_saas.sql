@@ -180,7 +180,47 @@ CREATE TRIGGER catalog_items_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION public.update_catalog_items_updated_at();
 
--- 6. Enhance Appointments Table
+-- 6. Appointments & Bookings Table (Create if not exists and Enhance)
+CREATE TABLE IF NOT EXISTS appointments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  account_id UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  contact_id UUID NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
+  conversation_id UUID REFERENCES conversations(id) ON DELETE SET NULL,
+  service_name TEXT NOT NULL,
+  provider_name TEXT,
+  appointment_date DATE NOT NULL,
+  appointment_time TIME NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending' 
+    CHECK (status IN ('pending', 'confirmed', 'cancelled', 'rescheduled', 'completed', 'no_show')),
+  clinic_location TEXT,
+  notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_appointments_account_date 
+  ON appointments(account_id, appointment_date, appointment_time);
+CREATE INDEX IF NOT EXISTS idx_appointments_contact 
+  ON appointments(contact_id);
+
+ALTER TABLE appointments ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS appointments_select ON appointments;
+CREATE POLICY appointments_select ON appointments FOR SELECT
+  USING (is_account_member(account_id));
+
+DROP POLICY IF EXISTS appointments_insert ON appointments;
+CREATE POLICY appointments_insert ON appointments FOR INSERT
+  WITH CHECK (is_account_member(account_id, 'agent'));
+
+DROP POLICY IF EXISTS appointments_update ON appointments;
+CREATE POLICY appointments_update ON appointments FOR UPDATE
+  USING (is_account_member(account_id, 'agent'));
+
+DROP POLICY IF EXISTS appointments_delete ON appointments;
+CREATE POLICY appointments_delete ON appointments FOR DELETE
+  USING (is_account_member(account_id, 'admin'));
+
 ALTER TABLE appointments
   ADD COLUMN IF NOT EXISTS location_id UUID REFERENCES locations(id) ON DELETE SET NULL,
   ADD COLUMN IF NOT EXISTS resource_id UUID REFERENCES clinic_resources(id) ON DELETE SET NULL,

@@ -158,6 +158,7 @@ export interface TreatmentPlan {
   assigned_dentist_id?: string | null;
   created_at: string;
   updated_at: string;
+  contact?: { id: string; name: string; phone: string; email?: string | null } | null;
 }
 
 export type InvoiceStatus = "draft" | "pending" | "paid" | "partially_paid" | "cancelled";
@@ -183,6 +184,7 @@ export interface Invoice {
   due_date?: string | null;
   payment_method?: string | null;
   created_at: string;
+  contact?: { id: string; name: string; phone: string; email?: string | null } | null;
 }
 
 export type SaaSPlanTier = "starter" | "growth" | "pro" | "enterprise";

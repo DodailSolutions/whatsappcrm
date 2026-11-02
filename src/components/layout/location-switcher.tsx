@@ -41,16 +41,10 @@ export function LocationSwitcher() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-8 gap-1.5 px-2 text-xs font-medium text-foreground/80 hover:text-foreground"
-        >
-          <MapPin className="size-3.5 text-primary" />
-          <span className="max-w-[120px] truncate">{activeLocation?.name || "Main Location"}</span>
-          <ChevronDown className="size-3 text-muted-foreground" />
-        </Button>
+      <DropdownMenuTrigger className="flex items-center gap-1.5 h-8 px-2 rounded-md text-xs font-medium text-foreground/80 hover:text-foreground hover:bg-muted/60 transition-colors focus:outline-none">
+        <MapPin className="size-3.5 text-primary" />
+        <span className="max-w-[120px] truncate">{activeLocation?.name || "Main Location"}</span>
+        <ChevronDown className="size-3 text-muted-foreground" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-48">
         <DropdownMenuLabel className="text-[11px] text-muted-foreground uppercase tracking-wider font-semibold">
