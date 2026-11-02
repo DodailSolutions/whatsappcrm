@@ -15,10 +15,13 @@ import {
   LayoutDashboard,
   LogOut,
   MessageSquare,
+  Package,
   Radio,
   Settings,
   Shield,
+  ShieldCheck,
   Sparkles,
+  Stethoscope,
   User,
   UserCog,
   Users,
@@ -102,9 +105,12 @@ const navItems: NavItem[] = [
   { href: "/automations", labelKey: "automations", icon: Zap },
   { href: "/flows", labelKey: "flows", icon: Workflow, beta: true },
   { href: "/agents", labelKey: "aiAgents", icon: Bot },
+  { href: "/catalog", labelKey: "catalog", icon: Package },
+  { href: "/dental", labelKey: "dentalClinic", icon: Stethoscope },
 ];
 
 const bottomNavItems = [
+  { href: "/super-admin", labelKey: "superAdmin", icon: ShieldCheck },
   { href: "/settings", labelKey: "settings", icon: Settings },
 ];
 

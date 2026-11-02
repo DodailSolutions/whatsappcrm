@@ -21,16 +21,50 @@ import {
   Zap,
   ArrowRight,
   ShieldCheck,
+  Stethoscope,
+  Shirt,
+  Car,
+  Dog,
+  ShoppingBag,
+  GraduationCap,
+  Hotel,
+  Briefcase,
+  Factory,
+  Layers,
+  HelpCircle,
 } from "lucide-react";
+import type { BusinessType, OperatingModel } from "@/types/business";
 
 const STEPS = [
   { id: 1, title: "Workspace", icon: Building2 },
   { id: 2, title: "Business Type", icon: Sparkles },
-  { id: 3, title: "Contacts", icon: Users },
-  { id: 4, title: "WhatsApp API", icon: MessageSquare },
-  { id: 5, title: "Invite Team", icon: Users },
-  { id: 6, title: "Sales Pipeline", icon: Workflow },
-  { id: 7, title: "Automations", icon: Zap },
+  { id: 3, title: "Operating Model", icon: Layers },
+  { id: 4, title: "Contacts", icon: Users },
+  { id: 5, title: "WhatsApp API", icon: MessageSquare },
+  { id: 6, title: "Invite Team", icon: Users },
+  { id: 7, title: "Sales & Catalog", icon: Workflow },
+];
+
+export const BUSINESS_TYPES: Array<{
+  id: BusinessType;
+  name: string;
+  desc: string;
+  icon: any;
+}> = [
+  { id: "dental", name: "Dental Clinic", desc: "Chair booking, patient CRM, treatment plans & dental WhatsApp recall", icon: Stethoscope },
+  { id: "healthcare", name: "General Clinic / Hospital", desc: "OPD consults, patient follow-up, doctor slots & reminders", icon: Stethoscope },
+  { id: "dry_cleaning", name: "Dry Cleaning", desc: "Garment care, society pickups, garment tracking & billing", icon: Shirt },
+  { id: "laundry_service", name: "Laundry Service", desc: "Wash & fold per kg, bulk monthly packages & door delivery", icon: Shirt },
+  { id: "laundry_agency", name: "Laundry Agency", desc: "Outsourced processing, pickup/drop agency route management", icon: Shirt },
+  { id: "rental_car", name: "Rental Car", desc: "Self-drive & chauffeur fleet, vehicle availability & security deposits", icon: Car },
+  { id: "pet_shop", name: "Pet Shop & Spa", desc: "Pet grooming bays, veterinary consults, dog food & treats", icon: Dog },
+  { id: "real_estate", name: "Real Estate", desc: "Site visit scheduling, property buyer qualification & deal pipeline", icon: Building2 },
+  { id: "ecommerce", name: "Ecommerce & Retail", desc: "Abandoned cart recovery, WhatsApp catalog orders & tracking", icon: ShoppingBag },
+  { id: "education", name: "Education & Coaching", desc: "Student batch inquiries, admissions counseling & fee alerts", icon: GraduationCap },
+  { id: "hospitality", name: "Hospitality & Hotels", desc: "Room bookings, concierge requests, guest check-in reminders", icon: Hotel },
+  { id: "services", name: "Professional Services", desc: "Consulting proposals, billable client meetings & contracts", icon: Briefcase },
+  { id: "manufacturing", name: "Manufacturing", desc: "B2B quote requests, distributor inquiries & sample tracking", icon: Factory },
+  { id: "other", name: "Other Business", desc: "Customizable WhatsApp CRM, automation journeys & broadcast suite", icon: HelpCircle },
 ];
 
 export function OnboardingWizard() {
@@ -41,7 +75,21 @@ export function OnboardingWizard() {
 
   // Form states
   const [workspaceName, setWorkspaceName] = useState("");
-  const [industry, setIndustry] = useState("real_estate");
+  const [businessType, setBusinessType] = useState<BusinessType>("dental");
+  const [operatingModel, setOperatingModel] = useState<OperatingModel>({
+    dentistModel: "single",
+    chairCount: 2,
+    branchModel: "single",
+    processingModel: "in_house",
+    pickupDeliveryEnabled: true,
+    hasDeliveryTeam: true,
+    fleetSize: 10,
+    rentalModel: "both",
+    multiLocationPickup: true,
+    petServices: ["retail", "grooming"],
+    appointmentRequired: true,
+  });
+
   const [contactMode, setContactMode] = useState<"demo" | "csv" | "blank">("demo");
   const [whatsappMode, setWhatsappMode] = useState<"simulated" | "live">("simulated");
   const [metaPhoneId, setMetaPhoneId] = useState("");
@@ -60,7 +108,8 @@ export function OnboardingWizard() {
           const data = await res.json();
           if (data.onboardingStep) setCurrentStep(data.onboardingStep);
           if (data.workspaceName) setWorkspaceName(data.workspaceName);
-          if (data.industry) setIndustry(data.industry);
+          if (data.businessType) setBusinessType(data.businessType);
+          if (data.operatingModel) setOperatingModel((prev) => ({ ...prev, ...data.operatingModel }));
         }
       } catch (err) {
         console.error(err);
@@ -80,11 +129,18 @@ export function OnboardingWizard() {
         body: JSON.stringify({
           step: nextStep,
           completed: isCompleted,
-          industry,
+          businessType,
+          operatingModel,
+          workspaceName,
+          industry: businessType,
         }),
       });
       if (isCompleted) {
-        router.push("/dashboard");
+        if (businessType === "dental") {
+          router.push("/dental");
+        } else {
+          router.push("/dashboard");
+        }
         return;
       }
       setCurrentStep(nextStep);
@@ -99,7 +155,6 @@ export function OnboardingWizard() {
     if (currentStep < 7) {
       await saveStep(currentStep + 1);
     } else {
-      // Complete onboarding!
       await saveStep(7, true);
     }
   };
@@ -128,16 +183,16 @@ export function OnboardingWizard() {
   const progressPercent = Math.round(((currentStep - 1) / (STEPS.length - 1)) * 100);
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 py-6">
+    <div className="mx-auto max-w-4xl space-y-6 py-6">
       {/* Header */}
       <div>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              Welcome to Dodail WhatsApp CRM
+              Welcome to Dodail WhatsApp CRM & Business Platform
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Complete these {STEPS.length} quick steps to configure your multi-tenant workspace.
+              Step {currentStep} of {STEPS.length}: Customize your business operations, catalog, and WhatsApp automations.
             </p>
           </div>
           <Badge className="border-primary/40 bg-primary/20 text-xs font-bold text-primary">
@@ -154,7 +209,7 @@ export function OnboardingWizard() {
         </div>
 
         {/* Step Icons */}
-        <div className="mt-3 flex justify-between">
+        <div className="mt-3 flex justify-between overflow-x-auto pb-1">
           {STEPS.map((s) => {
             const Icon = s.icon;
             const isDone = s.id < currentStep;
@@ -175,7 +230,7 @@ export function OnboardingWizard() {
                 <div
                   className={`flex size-7 items-center justify-center rounded-full border ${
                     isCurrent
-                      ? "border-primary bg-primary text-primary-foreground"
+                      ? "border-primary bg-primary text-primary-foreground shadow-sm"
                       : isDone
                         ? "border-primary/50 bg-primary/10 text-primary"
                         : "border-border bg-card text-muted-foreground"
@@ -196,70 +251,321 @@ export function OnboardingWizard() {
           {/* STEP 1: Workspace */}
           {currentStep === 1 && (
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-foreground">1. Name Your Workspace</h2>
+              <h2 className="text-lg font-semibold text-foreground">1. Workspace & Organization Details</h2>
               <p className="text-xs text-muted-foreground">
                 Your workspace isolates your contacts, conversations, templates, deals, and team settings from all other organizations.
               </p>
 
               <div>
                 <Label htmlFor="onboarding-ws-name" className="text-xs text-muted-foreground">
-                  Workspace / Business Name
+                  Business / Practice Name
                 </Label>
                 <Input
                   id="onboarding-ws-name"
                   value={workspaceName}
                   onChange={(e) => setWorkspaceName(e.target.value)}
-                  placeholder="e.g. Dodail Realty Group"
+                  placeholder="e.g. Apex Dental Spa or Sparkle Dry Cleaners"
                   className="mt-1.5 h-10 border-border bg-muted text-foreground"
                 />
               </div>
-            </div>
-          )}
 
-          {/* STEP 2: Business Type */}
-          {currentStep === 2 && (
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-foreground">2. Select Your Business Industry</h2>
-              <p className="text-xs text-muted-foreground">
-                This customizes your default lead tags, stage names, and automated customer journeys.
-              </p>
-
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {[
-                  { id: "real_estate", name: "Real Estate & Developers", desc: "Property visits, buyer qualification, unit booking deals" },
-                  { id: "ecommerce", name: "E-Commerce & Retail", desc: "Cart recovery, order updates, WhatsApp catalog sales" },
-                  { id: "healthcare", name: "Healthcare & Clinics", desc: "Appointment reminders, patient consults, prescription notices" },
-                  { id: "education", name: "Education & Coaching", desc: "Course admissions, student inquiries, batch notifications" },
-                  { id: "services", name: "Professional Services", desc: "Client proposals, consultation scheduling, contract tracking" },
-                  { id: "general", name: "General Business", desc: "Standard lead management, live chat support, broadcasts" },
-                ].map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => setIndustry(item.id)}
-                    className={`flex flex-col rounded-lg border p-3.5 text-left transition-all ${
-                      industry === item.id
-                        ? "border-primary bg-primary/10 shadow-sm"
-                        : "border-border bg-muted/40 hover:bg-muted"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-foreground">{item.name}</span>
-                      {industry === item.id && <CheckCircle2 className="size-4 text-primary" />}
-                    </div>
-                    <span className="mt-1 text-xs text-muted-foreground">{item.desc}</span>
-                  </button>
-                ))}
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 text-xs text-muted-foreground">
+                <span className="font-semibold text-foreground">Multi-Tenant Isolation Guaranteed:</span> Your WhatsApp Business Account tokens, customer records, catalogs, and chats are encrypted and securely partitioned with row-level security.
               </div>
             </div>
           )}
 
-          {/* STEP 3: Contacts */}
-          {currentStep === 3 && (
+          {/* STEP 2: Business Type Selection */}
+          {currentStep === 2 && (
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-foreground">3. Populate Your Contacts</h2>
+              <h2 className="text-lg font-semibold text-foreground">2. Select Your Primary Business Category</h2>
               <p className="text-xs text-muted-foreground">
-                How would you like to start your workspace contact database?
+                Dodail adapts its CRM modules, booking rules, AI sales agents, and catalog templates to your exact industry.
+              </p>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 max-h-[460px] overflow-y-auto pr-1">
+                {BUSINESS_TYPES.map((item) => {
+                  const Icon = item.icon;
+                  const isSelected = businessType === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setBusinessType(item.id)}
+                      className={`flex flex-col rounded-lg border p-3 text-left transition-all ${
+                        isSelected
+                          ? "border-primary bg-primary/10 shadow-sm"
+                          : "border-border bg-muted/40 hover:bg-muted"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Icon className={`size-4 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
+                          <span className="text-xs font-semibold text-foreground">{item.name}</span>
+                        </div>
+                        {isSelected && <CheckCircle2 className="size-4 text-primary" />}
+                      </div>
+                      <span className="mt-1.5 text-[11px] text-muted-foreground leading-relaxed">{item.desc}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* STEP 3: Conditional Operating Model Questions */}
+          {currentStep === 3 && (
+            <div className="space-y-5">
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">3. Operating Model & Capacity Configuration</h2>
+                <p className="text-xs text-muted-foreground">
+                  Customizing settings for: <span className="font-semibold text-primary">{BUSINESS_TYPES.find(b => b.id === businessType)?.name}</span>
+                </p>
+              </div>
+
+              {/* DENTAL CLINIC QUESTIONS */}
+              {businessType === "dental" && (
+                <div className="space-y-4 rounded-lg border border-border bg-muted/20 p-4">
+                  <div className="text-sm font-semibold text-foreground">Dental Clinic Parameters</div>
+
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Practice Model</Label>
+                      <div className="mt-1.5 flex gap-2">
+                        <Button
+                          type="button"
+                          variant={operatingModel.dentistModel === "single" ? "default" : "outline"}
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => setOperatingModel((prev) => ({ ...prev, dentistModel: "single" }))}
+                        >
+                          Single Dentist
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={operatingModel.dentistModel === "multi" ? "default" : "outline"}
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => setOperatingModel((prev) => ({ ...prev, dentistModel: "multi" }))}
+                        >
+                          Multi-Dentist Team
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Number of Dental Chairs / Operatories</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        max="50"
+                        value={operatingModel.chairCount || 2}
+                        onChange={(e) => setOperatingModel((prev) => ({ ...prev, chairCount: parseInt(e.target.value) || 1 }))}
+                        className="mt-1.5 h-9"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Location Model</Label>
+                    <div className="mt-1.5 flex gap-2">
+                      <Button
+                        type="button"
+                        variant={operatingModel.branchModel === "single" ? "default" : "outline"}
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => setOperatingModel((prev) => ({ ...prev, branchModel: "single" }))}
+                      >
+                        Single Clinic Location
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={operatingModel.branchModel === "multi" ? "default" : "outline"}
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => setOperatingModel((prev) => ({ ...prev, branchModel: "multi" }))}
+                      >
+                        Multi-Branch Practice
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* LAUNDRY / DRY CLEANING QUESTIONS */}
+              {(businessType === "dry_cleaning" || businessType === "laundry_service" || businessType === "laundry_agency") && (
+                <div className="space-y-4 rounded-lg border border-border bg-muted/20 p-4">
+                  <div className="text-sm font-semibold text-foreground">Laundry & Garment Logistics</div>
+
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Processing Facility</Label>
+                      <div className="mt-1.5 flex gap-2">
+                        <Button
+                          type="button"
+                          variant={operatingModel.processingModel === "in_house" ? "default" : "outline"}
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => setOperatingModel((prev) => ({ ...prev, processingModel: "in_house" }))}
+                        >
+                          In-House Processing
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={operatingModel.processingModel === "agency" ? "default" : "outline"}
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => setOperatingModel((prev) => ({ ...prev, processingModel: "agency" }))}
+                        >
+                          Outsourced Agency
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Doorstep Pickup & Delivery</Label>
+                      <div className="mt-1.5 flex gap-2">
+                        <Button
+                          type="button"
+                          variant={operatingModel.pickupDeliveryEnabled ? "default" : "outline"}
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => setOperatingModel((prev) => ({ ...prev, pickupDeliveryEnabled: true }))}
+                        >
+                          Enabled (Pickups & Drops)
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={!operatingModel.pickupDeliveryEnabled ? "default" : "outline"}
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => setOperatingModel((prev) => ({ ...prev, pickupDeliveryEnabled: false }))}
+                        >
+                          Store Walk-in Only
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Societies / Route Coverage Areas</Label>
+                    <Input
+                      placeholder="e.g. Palm Meadows, Prestige Golfshire, Sector 45"
+                      value={operatingModel.societiesRouteCoverage || ""}
+                      onChange={(e) => setOperatingModel((prev) => ({ ...prev, societiesRouteCoverage: e.target.value }))}
+                      className="mt-1.5 h-9"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* RENTAL CAR QUESTIONS */}
+              {businessType === "rental_car" && (
+                <div className="space-y-4 rounded-lg border border-border bg-muted/20 p-4">
+                  <div className="text-sm font-semibold text-foreground">Fleet & Dispatch Settings</div>
+
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Total Fleet Size (Vehicles)</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={operatingModel.fleetSize || 10}
+                        onChange={(e) => setOperatingModel((prev) => ({ ...prev, fleetSize: parseInt(e.target.value) || 1 }))}
+                        className="mt-1.5 h-9"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Rental Type Offered</Label>
+                      <div className="mt-1.5 flex gap-2">
+                        <Button
+                          type="button"
+                          variant={operatingModel.rentalModel === "self_drive" ? "default" : "outline"}
+                          size="sm"
+                          className="flex-1 text-xs"
+                          onClick={() => setOperatingModel((prev) => ({ ...prev, rentalModel: "self_drive" }))}
+                        >
+                          Self-Drive
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={operatingModel.rentalModel === "chauffeur" ? "default" : "outline"}
+                          size="sm"
+                          className="flex-1 text-xs"
+                          onClick={() => setOperatingModel((prev) => ({ ...prev, rentalModel: "chauffeur" }))}
+                        >
+                          Chauffeur
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={operatingModel.rentalModel === "both" ? "default" : "outline"}
+                          size="sm"
+                          className="flex-1 text-xs"
+                          onClick={() => setOperatingModel((prev) => ({ ...prev, rentalModel: "both" }))}
+                        >
+                          Both
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* PET SHOP QUESTIONS */}
+              {businessType === "pet_shop" && (
+                <div className="space-y-4 rounded-lg border border-border bg-muted/20 p-4">
+                  <div className="text-sm font-semibold text-foreground">Pet Services & Retail Modules</div>
+
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Active Offerings</Label>
+                    <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                      {[
+                        { id: "retail", label: "Pet Food & Retail" },
+                        { id: "grooming", label: "Spa & Grooming" },
+                        { id: "vet", label: "Veterinary Consults" },
+                        { id: "boarding", label: "Pet Boarding" },
+                      ].map((item) => {
+                        const isChecked = operatingModel.petServices?.includes(item.id as any);
+                        return (
+                          <Button
+                            key={item.id}
+                            type="button"
+                            variant={isChecked ? "default" : "outline"}
+                            size="sm"
+                            className="text-xs"
+                            onClick={() => {
+                              const current = operatingModel.petServices || [];
+                              const updated = isChecked
+                                ? current.filter((x) => x !== item.id)
+                                : [...current, item.id as any];
+                              setOperatingModel((prev) => ({ ...prev, petServices: updated }));
+                            }}
+                          >
+                            {item.label}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* OTHER / GENERAL */}
+              {!["dental", "dry_cleaning", "laundry_service", "laundry_agency", "rental_car", "pet_shop"].includes(businessType) && (
+                <div className="rounded-lg border border-border bg-muted/20 p-4 text-xs text-muted-foreground">
+                  Standard operating hours, multi-agent inbox, and sales pipeline will be provisioned for your business type. You can adjust custom fields and workflows anytime in Settings.
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* STEP 4: Contacts */}
+          {currentStep === 4 && (
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-foreground">4. Populate Your Contacts</h2>
+              <p className="text-xs text-muted-foreground">
+                How would you like to initialize your workspace contact database?
               </p>
 
               <div className="grid grid-cols-1 gap-3">
@@ -276,7 +582,7 @@ export function OnboardingWizard() {
                   <div>
                     <div className="font-semibold text-foreground text-sm">Load Realistic Sample Leads (Recommended)</div>
                     <div className="text-xs text-muted-foreground mt-0.5">
-                      Pre-populates sample inquiries, conversation history, tags, and active deals so you can test all CRM features immediately.
+                      Pre-populates industry-specific inquiries, conversation history, tags, and active deals so you can test all CRM features immediately.
                     </div>
                   </div>
                 </button>
@@ -308,11 +614,11 @@ export function OnboardingWizard() {
                       : "border-border bg-muted/40 hover:bg-muted"
                   }`}
                 >
-                  <Users className="size-5 shrink-0 text-muted-foreground mt-0.5" />
+                  <Users className="size-5 shrink-0 text-primary mt-0.5" />
                   <div>
-                    <div className="font-semibold text-foreground text-sm">Start with an empty workspace</div>
+                    <div className="font-semibold text-foreground text-sm">Start with Empty Database</div>
                     <div className="text-xs text-muted-foreground mt-0.5">
-                      Contacts will be created dynamically as new customer messages arrive via WhatsApp.
+                      Start fresh. Contacts will be added automatically when customers message your WhatsApp number.
                     </div>
                   </div>
                 </button>
@@ -320,128 +626,100 @@ export function OnboardingWizard() {
             </div>
           )}
 
-          {/* STEP 4: WhatsApp Integration */}
-          {currentStep === 4 && (
+          {/* STEP 5: WhatsApp API */}
+          {currentStep === 5 && (
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-foreground">4. Connect Official WhatsApp API</h2>
+              <h2 className="text-lg font-semibold text-foreground">5. Connect WhatsApp Business Platform</h2>
               <p className="text-xs text-muted-foreground">
-                Connect your official Meta Cloud API account or use our safe simulated environment during setup.
+                Connect your Meta WhatsApp Cloud API credentials or continue in Simulated Sandbox Mode.
               </p>
 
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                <button
+              <div className="grid grid-cols-2 gap-3">
+                <Button
                   type="button"
+                  variant={whatsappMode === "simulated" ? "default" : "outline"}
                   onClick={() => setWhatsappMode("simulated")}
-                  className={`rounded-lg border p-3 text-center transition-all ${
-                    whatsappMode === "simulated"
-                      ? "border-primary bg-primary/10 font-medium text-primary"
-                      : "border-border bg-muted/40 text-muted-foreground"
-                  }`}
+                  className="flex items-center gap-2"
                 >
-                  <Sparkles className="mx-auto size-5 mb-1 text-primary" />
-                  <div className="text-xs font-semibold">Simulated Testing</div>
-                </button>
-
-                <button
+                  <Sparkles className="size-4" />
+                  Simulated Sandbox (No Meta setup needed)
+                </Button>
+                <Button
                   type="button"
+                  variant={whatsappMode === "live" ? "default" : "outline"}
                   onClick={() => setWhatsappMode("live")}
-                  className={`rounded-lg border p-3 text-center transition-all ${
-                    whatsappMode === "live"
-                      ? "border-primary bg-primary/10 font-medium text-primary"
-                      : "border-border bg-muted/40 text-muted-foreground"
-                  }`}
+                  className="flex items-center gap-2"
                 >
-                  <MessageSquare className="mx-auto size-5 mb-1 text-primary" />
-                  <div className="text-xs font-semibold">Official Meta Cloud API</div>
-                </button>
+                  <MessageSquare className="size-4" />
+                  Live Meta Cloud API
+                </Button>
               </div>
 
               {whatsappMode === "live" ? (
-                <div className="space-y-3">
+                <div className="space-y-3 rounded-lg border border-border p-4 bg-muted/20">
                   <div>
-                    <Label className="text-xs text-muted-foreground">Phone Number ID</Label>
+                    <Label className="text-xs">Meta Phone Number ID</Label>
                     <Input
                       value={metaPhoneId}
                       onChange={(e) => setMetaPhoneId(e.target.value)}
-                      placeholder="e.g. 104829104829104"
-                      className="mt-1 h-9 border-border bg-muted text-sm"
+                      placeholder="e.g. 1048291039485"
+                      className="mt-1 h-9"
                     />
                   </div>
                   <div>
-                    <Label className="text-xs text-muted-foreground">WhatsApp Business Account ID (WABA)</Label>
+                    <Label className="text-xs">WhatsApp Business Account (WABA) ID</Label>
                     <Input
                       value={metaWabaId}
                       onChange={(e) => setMetaWabaId(e.target.value)}
-                      placeholder="e.g. 918274019284710"
-                      className="mt-1 h-9 border-border bg-muted text-sm"
+                      placeholder="e.g. 2938472910495"
+                      className="mt-1 h-9"
                     />
                   </div>
                   <div>
-                    <Label className="text-xs text-muted-foreground">Permanent System User Token</Label>
+                    <Label className="text-xs">System User Access Token</Label>
                     <Input
                       type="password"
                       value={metaToken}
                       onChange={(e) => setMetaToken(e.target.value)}
                       placeholder="EAAG..."
-                      className="mt-1 h-9 border-border bg-muted text-sm"
+                      className="mt-1 h-9"
                     />
                   </div>
                 </div>
               ) : (
-                <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-2 font-semibold text-foreground mb-1">
-                    <ShieldCheck className="size-4 text-primary" />
-                    Simulated Sandbox Mode
-                  </div>
-                  Outbound WhatsApp messages will simulate delivery ticks, instant responses, and status changes without sending real messages to customer phone numbers. You can link your Meta API keys anytime in Settings.
+                <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 text-xs text-muted-foreground">
+                  In Sandbox Mode, inbound and outbound WhatsApp conversations run locally without invoking Meta's paid messaging API. You can switch to live production anytime in Settings.
                 </div>
               )}
             </div>
           )}
 
-          {/* STEP 5: Invite Team */}
-          {currentStep === 5 && (
+          {/* STEP 6: Invite Team */}
+          {currentStep === 6 && (
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-foreground">5. Invite Your Teammates</h2>
+              <h2 className="text-lg font-semibold text-foreground">6. Invite Team Members</h2>
               <p className="text-xs text-muted-foreground">
-                Give your sales reps, support agents, and managers access to the unified inbox.
+                Collaborate with receptionists, sales reps, dentists, and managers in a shared workspace.
               </p>
 
               <div className="flex gap-2">
                 <Input
-                  type="email"
                   value={teammateEmail}
                   onChange={(e) => setTeammateEmail(e.target.value)}
-                  placeholder="agent@company.com"
-                  className="h-9 border-border bg-muted text-sm flex-1"
+                  placeholder="colleague@yourbusiness.com"
+                  className="h-9 flex-1"
                 />
-                <select
-                  value={teammateRole}
-                  onChange={(e) => setTeammateRole(e.target.value as "admin" | "agent")}
-                  className="h-9 rounded-md border border-border bg-muted px-2.5 text-xs text-foreground focus:outline-none"
-                >
-                  <option value="agent">Agent</option>
-                  <option value="admin">Admin</option>
-                </select>
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={handleAddTeammate}
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs"
-                >
-                  Add
+                <Button type="button" onClick={handleAddTeammate} size="sm">
+                  Add Invite
                 </Button>
               </div>
 
               {invitedList.length > 0 && (
-                <div className="rounded-lg border border-border p-3 space-y-2">
-                  <div className="text-xs font-medium text-muted-foreground">Invitations to send:</div>
-                  {invitedList.map((inv, idx) => (
-                    <div key={idx} className="flex items-center justify-between text-xs py-1">
-                      <span className="font-medium text-foreground">{inv.email}</span>
-                      <Badge className="text-[10px] uppercase font-bold bg-muted text-muted-foreground border-border">
-                        {inv.role}
-                      </Badge>
+                <div className="space-y-1.5">
+                  {invitedList.map((m, idx) => (
+                    <div key={idx} className="flex items-center justify-between rounded border border-border p-2 text-xs">
+                      <span>{m.email}</span>
+                      <Badge variant="outline">{m.role}</Badge>
                     </div>
                   ))}
                 </div>
@@ -449,101 +727,52 @@ export function OnboardingWizard() {
             </div>
           )}
 
-          {/* STEP 6: Sales Pipeline */}
-          {currentStep === 6 && (
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-foreground">6. Verify Your Sales Pipeline</h2>
-              <p className="text-xs text-muted-foreground">
-                Default stages configured for {industry === "real_estate" ? "Real Estate" : industry}:
-              </p>
-
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-5 text-center">
-                {[
-                  { name: "New Lead", count: "100%" },
-                  { name: "Contacted", count: "80%" },
-                  { name: "Site Visit / Demo", count: "50%" },
-                  { name: "Negotiation", count: "30%" },
-                  { name: "Deal Won", count: "10%" },
-                ].map((stg, i) => (
-                  <div key={i} className="rounded-lg border border-border bg-muted/40 p-3">
-                    <div className="text-[10px] font-bold text-primary uppercase">Stage {i + 1}</div>
-                    <div className="text-xs font-semibold text-foreground mt-1">{stg.name}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* STEP 7: Automations */}
+          {/* STEP 7: Sales & Catalog */}
           {currentStep === 7 && (
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-foreground">7. Activate Your First WhatsApp Automation</h2>
+              <h2 className="text-lg font-semibold text-foreground">7. Universal Business Catalog & Finalize</h2>
               <p className="text-xs text-muted-foreground">
-                Set up instant response rules so incoming leads receive immediate answers 24/7.
+                We will automatically seed starter services, treatments, prices, and booking resources for your selected industry: <strong className="text-primary">{BUSINESS_TYPES.find(b => b.id === businessType)?.name}</strong>.
               </p>
 
-              <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 flex items-start gap-3">
-                <Zap className="size-5 text-primary shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <div className="text-sm font-semibold text-foreground">Instant Welcome Greeting</div>
-                  <div className="text-xs text-muted-foreground mt-0.5">
-                    Triggered whenever a customer sends their first WhatsApp message to your number.
-                  </div>
-                  <div className="mt-3 rounded-md border border-border bg-background p-2.5 text-xs text-muted-foreground font-mono">
-                    "Hello! Thanks for reaching out to us. How can our team assist you today?"
-                  </div>
+              <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-2 text-xs">
+                <div className="flex items-center gap-2 font-semibold text-foreground">
+                  <CheckCircle2 className="size-4 text-primary" /> Ready to Provision Workspace:
                 </div>
-                <input
-                  type="checkbox"
-                  checked={enableWelcomeAutoReply}
-                  onChange={(e) => setEnableWelcomeAutoReply(e.target.checked)}
-                  className="mt-1 size-4 rounded accent-primary"
-                />
+                <div className="text-muted-foreground">• Scoped Catalog: Default items, durations, and rates</div>
+                <div className="text-muted-foreground">• Primary Location & Resource Allocations</div>
+                <div className="text-muted-foreground">• Industry-Tuned AI Sales & Follow-up Workflows</div>
+                <div className="text-muted-foreground">• Role-Based Multi-User Access Control</div>
               </div>
             </div>
           )}
 
-          {/* Wizard Footer Navigation */}
+          {/* Bottom Actions */}
           <div className="mt-8 flex items-center justify-between border-t border-border pt-4">
             <Button
               type="button"
               variant="outline"
-              size="sm"
               onClick={handleBack}
               disabled={currentStep === 1 || saving}
-              className="text-xs"
+              size="sm"
+              className="flex items-center gap-1 text-xs"
             >
-              <ChevronLeft className="mr-1 size-3.5" />
-              Back
+              <ChevronLeft className="size-3.5" /> Back
             </Button>
 
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => saveStep(7, true)}
-                disabled={saving}
-                className="text-xs text-muted-foreground"
-              >
-                Skip for Now
-              </Button>
-
-              <Button
-                type="button"
-                size="sm"
-                onClick={handleNext}
-                disabled={saving}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs flex items-center gap-1.5"
-              >
-                <span>{currentStep === 7 ? "Finish & Open Workspace" : "Continue"}</span>
-                {currentStep === 7 ? <ArrowRight className="size-3.5" /> : <ChevronRight className="size-3.5" />}
-              </Button>
-            </div>
+            <Button
+              type="button"
+              onClick={handleNext}
+              disabled={saving}
+              size="sm"
+              className="flex items-center gap-1 text-xs font-semibold"
+            >
+              {saving ? "Saving..." : currentStep === 7 ? "Complete Onboarding" : "Continue"}
+              {currentStep < 7 && <ChevronRight className="size-3.5" />}
+            </Button>
           </div>
         </CardContent>
       </Card>
     </div>
   );
 }
-
