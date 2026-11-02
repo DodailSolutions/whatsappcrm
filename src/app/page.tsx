@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BrandMark } from "@/components/layout/brand-logo";
 import { DEFAULT_LANDING_CMS, type LandingPageCMS } from "@/lib/cms/default-landing-cms";
+import { createClient } from "@/lib/supabase/client";
 import {
+  Home,
   MessageSquare,
   Sparkles,
   CheckCircle2,
@@ -47,6 +49,14 @@ export default function LandingPage() {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data }) => {
+      if (data?.session) setIsLoggedIn(true);
+    });
+  }, []);
 
   useEffect(() => {
     async function loadLandingData() {
@@ -142,7 +152,7 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] dark:bg-background text-foreground selection:bg-primary/20">
+    <div className="min-h-screen bg-[#FAFAFA] dark:bg-background text-foreground selection:bg-primary/20 pb-20 lg:pb-0">
       {/* 1. NAVIGATION HEADER */}
       <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-white/95 dark:bg-card/95 backdrop-blur-md transition-all">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -971,6 +981,64 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* Smart Mobile Bottom Navigation for Landing Page Visitors */}
+      <nav
+        aria-label="Mobile Landing Navigation"
+        className="fixed bottom-0 left-0 right-0 z-40 lg:hidden border-t border-border/80 bg-white/95 dark:bg-card/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_16px_rgba(0,0,0,0.06)] px-2 py-1.5 flex items-center justify-between"
+      >
+        <a
+          href="#"
+          onClick={(e) => {
+            e.preventDefault();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          className="flex flex-1 flex-col items-center justify-center py-1 text-muted-foreground hover:text-foreground active:scale-95 transition-all"
+        >
+          <Home className="size-4.5" />
+          <span className="text-[10px] mt-0.5 font-semibold">Home</span>
+        </a>
+
+        <a
+          href="#features"
+          className="flex flex-1 flex-col items-center justify-center py-1 text-muted-foreground hover:text-foreground active:scale-95 transition-all"
+        >
+          <Package className="size-4.5" />
+          <span className="text-[10px] mt-0.5 font-semibold">Features</span>
+        </a>
+
+        <a
+          href="#business-types"
+          className="flex flex-1 flex-col items-center justify-center py-1 text-muted-foreground hover:text-foreground active:scale-95 transition-all"
+        >
+          <Layers className="size-4.5" />
+          <span className="text-[10px] mt-0.5 font-semibold">Industries</span>
+        </a>
+
+        <a
+          href="#pricing"
+          className="flex flex-1 flex-col items-center justify-center py-1 text-muted-foreground hover:text-foreground active:scale-95 transition-all"
+        >
+          <Sparkles className="size-4.5" />
+          <span className="text-[10px] mt-0.5 font-semibold">Pricing</span>
+        </a>
+
+        <div className="flex-1 px-1">
+          {isLoggedIn ? (
+            <Link href="/dashboard" className="block w-full">
+              <Button size="sm" className="w-full h-8 px-2 text-[11px] font-bold bg-[#F15A22] hover:bg-[#d94a15] text-white rounded-lg shadow-xs">
+                CRM <ArrowRight className="ml-1 size-3" />
+              </Button>
+            </Link>
+          ) : (
+            <Link href="/login" className="block w-full">
+              <Button size="sm" className="w-full h-8 px-2 text-[11px] font-bold bg-[#F15A22] hover:bg-[#d94a15] text-white rounded-lg shadow-xs">
+                Sign In
+              </Button>
+            </Link>
+          )}
+        </div>
+      </nav>
     </div>
   );
 }

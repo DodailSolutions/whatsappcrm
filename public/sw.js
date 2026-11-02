@@ -4,13 +4,17 @@
 // NEVER caches private customer data, messages, or API routes.
 // ============================================================
 
-const CACHE_NAME = "dodail-crm-v1";
+const CACHE_NAME = "dodail-crm-v2";
 const OFFLINE_URL = "/offline";
 
 const STATIC_PRECACHE = [
   "/",
   "/offline",
   "/logo.png",
+  "/favicon.ico",
+  "/favicon.svg",
+  "/favicon-32x32.png",
+  "/apple-touch-icon.png",
   "/manifest.webmanifest",
 ];
 
