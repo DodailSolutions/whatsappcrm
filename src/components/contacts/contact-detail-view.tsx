@@ -460,36 +460,36 @@ export function ContactDetailView({
 
             {/* Tabs */}
             <Tabs defaultValue="details" className="flex-1 flex flex-col min-h-0">
-              <TabsList className="bg-muted/50 border-b border-border mx-4 mt-3">
-                <TabsTrigger
-                  value="details"
-                  className="data-active:bg-muted data-active:text-primary text-muted-foreground"
-                >
+              <TabsList variant="line" className="px-4 mt-2 border-b border-border/80">
+                <TabsTrigger value="details">
                   {t('tabs.details')}
                 </TabsTrigger>
-                <TabsTrigger
-                  value="tags"
-                  className="data-active:bg-muted data-active:text-primary text-muted-foreground"
-                >
-                  {t('tabs.tags')}
+                <TabsTrigger value="tags">
+                  <span>{t('tabs.tags')}</span>
+                  {contactTagIds.length > 0 && (
+                    <span className="ml-1 rounded-full bg-primary/10 px-1.5 py-0.2 text-[10px] font-bold text-primary">
+                      {contactTagIds.length}
+                    </span>
+                  )}
                 </TabsTrigger>
-                <TabsTrigger
-                  value="notes"
-                  className="data-active:bg-muted data-active:text-primary text-muted-foreground"
-                >
-                  {t('tabs.notes')}
+                <TabsTrigger value="notes">
+                  <span>{t('tabs.notes')}</span>
+                  {notes.length > 0 && (
+                    <span className="ml-1 rounded-full bg-primary/10 px-1.5 py-0.2 text-[10px] font-bold text-primary">
+                      {notes.length}
+                    </span>
+                  )}
                 </TabsTrigger>
-                <TabsTrigger
-                  value="custom"
-                  className="data-active:bg-muted data-active:text-primary text-muted-foreground"
-                >
+                <TabsTrigger value="custom">
                   {t('tabs.custom')}
                 </TabsTrigger>
-                <TabsTrigger
-                  value="deals"
-                  className="data-active:bg-muted data-active:text-primary text-muted-foreground"
-                >
-                  {t('tabs.deals')}
+                <TabsTrigger value="deals">
+                  <span>{t('tabs.deals')}</span>
+                  {deals.length > 0 && (
+                    <span className="ml-1 rounded-full bg-primary/10 px-1.5 py-0.2 text-[10px] font-bold text-primary">
+                      {deals.length}
+                    </span>
+                  )}
                 </TabsTrigger>
               </TabsList>
 

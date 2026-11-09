@@ -317,7 +317,7 @@ export default function DentalPage() {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex border-b border-border space-x-6 text-sm font-medium">
+      <div className="flex border-b border-border/80 space-x-2 sm:space-x-6 text-sm font-medium overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {[
           { id: "dashboard", label: "Dashboard & Chairs", icon: Activity },
           { id: "patients", label: "Patient CRM & Timeline", icon: Users },
@@ -331,10 +331,10 @@ export default function DentalPage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-2 pb-3 pt-1 text-xs border-b-2 font-semibold transition-all ${
+              className={`flex shrink-0 items-center gap-2 pb-3 pt-1.5 px-1 text-xs sm:text-sm border-b-2 font-semibold transition-all cursor-pointer ${
                 isActive
                   ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
               }`}
             >
               <Icon className="size-4" />

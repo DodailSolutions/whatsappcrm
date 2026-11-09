@@ -57,19 +57,23 @@ export default function AgentsPage() {
           onValueChange={(v) => setTab(v as Tab)}
           className="mt-6"
         >
-          <TabsList>
+          <TabsList className="bg-muted/70 p-1 border border-border/60 shadow-2xs">
             <TabsTrigger value="playground">
-              <Sparkles className="mr-1.5 h-4 w-4" /> {t('tabPlayground')}
+              <Sparkles className="mr-1.5 h-4 w-4 text-amber-500" /> {t('tabPlayground')}
             </TabsTrigger>
-            <TabsTrigger value="sales_agent" className="text-primary font-medium">
-              <TrendingUp className="mr-1.5 h-4 w-4" /> AI Sales Agent
+            <TabsTrigger value="sales_agent">
+              <TrendingUp className="mr-1.5 h-4 w-4 text-primary" />
+              <span>AI Sales Agent</span>
+              <span className="ml-1 rounded-full bg-primary/15 px-1.5 py-0.2 text-[10px] font-bold text-primary">
+                PRO
+              </span>
             </TabsTrigger>
             <TabsTrigger value="setup">
-              <Settings2 className="mr-1.5 h-4 w-4" /> {t('tabSetup')}
+              <Settings2 className="mr-1.5 h-4 w-4 text-muted-foreground" /> {t('tabSetup')}
             </TabsTrigger>
             {canViewUsage && (
               <TabsTrigger value="usage">
-                <BarChart3 className="mr-1.5 h-4 w-4" /> {t('tabUsage')}
+                <BarChart3 className="mr-1.5 h-4 w-4 text-muted-foreground" /> {t('tabUsage')}
               </TabsTrigger>
             )}
           </TabsList>

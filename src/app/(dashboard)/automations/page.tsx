@@ -184,12 +184,20 @@ export default function AutomationsPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
-        <TabsList className="bg-card border border-border">
-          <TabsTrigger value="workflows" className="text-xs">
-            All Workflows ({automations.length})
+        <TabsList className="bg-muted/70 p-1 border border-border/60 shadow-2xs">
+          <TabsTrigger value="workflows">
+            <Zap className="mr-1.5 h-4 w-4 text-amber-500" />
+            <span>All Workflows</span>
+            <span className="ml-1 rounded-full bg-muted-foreground/10 px-1.5 py-0.2 text-[10px] font-bold text-muted-foreground">
+              {automations.length}
+            </span>
           </TabsTrigger>
-          <TabsTrigger value="ai_templates" className="text-xs gap-1.5 text-primary">
-            <Sparkles className="h-3.5 w-3.5" /> AI Follow-up Templates (10)
+          <TabsTrigger value="ai_templates">
+            <Sparkles className="mr-1.5 h-4 w-4 text-primary" />
+            <span>AI Follow-up Templates</span>
+            <span className="ml-1 rounded-full bg-primary/15 px-1.5 py-0.2 text-[10px] font-bold text-primary">
+              10
+            </span>
           </TabsTrigger>
         </TabsList>
 
