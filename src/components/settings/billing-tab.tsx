@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Script from "next/script";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +39,76 @@ export function BillingTab() {
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [paying, setPaying] = useState(false);
+
+  const handlePayWithRazorpay = async () => {
+    if (!selectedPlan) return;
+    try {
+      setPaying(true);
+      const res = await fetch("/api/billing/razorpay/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          planId: selectedPlan,
+          billingCycle: billingCycle === "yearly" ? "annual" : "monthly",
+        }),
+      });
+
+      const orderData = await res.json();
+      if (!res.ok || !orderData.orderId) {
+        toast.error(orderData.error || "Failed to create order");
+        return;
+      }
+
+      if (typeof window === "undefined" || !window.Razorpay) {
+        toast.error("Razorpay is initializing. Please try again in a few seconds.");
+        return;
+      }
+
+      const options = {
+        key: orderData.keyId,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "Dodail WhatsApp CRM",
+        description: `${orderData.planName} Subscription (${billingCycle})`,
+        order_id: orderData.orderId,
+        theme: {
+          color: "#F15A22",
+        },
+        handler: async (response: any) => {
+          try {
+            const verifyRes = await fetch("/api/billing/razorpay/verify-payment", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                ...response,
+                planId: selectedPlan,
+              }),
+            });
+            const verifyData = await verifyRes.json();
+            if (verifyRes.ok) {
+              toast.success("Payment verified! Subscription updated.");
+              setShowConfirm(false);
+              fetchBilling();
+            } else {
+              toast.error(verifyData.error || "Payment verification failed");
+            }
+          } catch (err) {
+            console.error(err);
+            toast.error("Verification error");
+          }
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to start payment");
+    } finally {
+      setPaying(false);
+    }
+  };
 
   const fetchBilling = async () => {
     setLoading(true);
@@ -280,6 +352,7 @@ export function BillingTab() {
               Per SaaS billing safeguards, real credit card / payment gateway charges will only trigger with your connected Razorpay or Stripe merchant credentials.
             </p>
 
+            <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
             <div className="mt-6 flex justify-end gap-2">
               <Button
                 variant="ghost"
@@ -291,13 +364,12 @@ export function BillingTab() {
               </Button>
               <Button
                 size="sm"
-                onClick={() => {
-                  alert(`Plan selection registered: ${selectedPlan?.toUpperCase()} (${billingCycle}).`);
-                  setShowConfirm(false);
-                }}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs"
+                disabled={paying}
+                onClick={handlePayWithRazorpay}
+                className="bg-[#F15A22] text-white hover:bg-[#d94a15] text-xs font-bold"
               >
-                Confirm Plan Selection
+                <CreditCard className="mr-1.5 size-3.5" />
+                {paying ? "Opening Razorpay..." : "Purchase Now with Razorpay"}
               </Button>
             </div>
           </div>

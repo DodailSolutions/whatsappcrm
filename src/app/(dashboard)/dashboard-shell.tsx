@@ -11,6 +11,7 @@ import { DemoBanner } from "@/components/demo/demo-banner";
 import { PresenceHeartbeat } from "@/components/presence/presence-heartbeat";
 import { BrowserNotificationsListener } from "@/components/notifications/browser-notifications-listener";
 import { CrmBottomNav } from "@/components/layout/crm-bottom-nav";
+import { TrialExpiredModal } from "@/components/billing/trial-expired-modal";
 
 // Auth-gated dashboard shell. Extracted from the layout so the layout
 // itself can stay a server component and export metadata (noindex) —
@@ -62,6 +63,7 @@ function DashboardShellInner({ children }: { children: React.ReactNode }) {
               Renders nothing unless the account/role failed to resolve. */}
           <AccountAccessAlert />
           <DemoBanner />
+          <TrialExpiredModal />
           {children}
         </main>
         {/* Mobile-only CRM Bottom Navigation bar */}

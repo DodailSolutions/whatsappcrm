@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import Script from "next/script";
 import { useState, useEffect, useRef, useCallback } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BrandMark } from "@/components/layout/brand-logo";
@@ -47,6 +49,8 @@ import {
   Briefcase,
   Factory,
   Code2,
+  CreditCard,
+  Flame,
 } from "lucide-react";
 
 export default function LandingPage() {
@@ -59,6 +63,74 @@ export default function LandingPage() {
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+
+  const handleRazorpayCheckout = async (planId: string) => {
+    try {
+      setCheckoutLoading(planId);
+      const res = await fetch("/api/billing/razorpay/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          planId,
+          billingCycle,
+        }),
+      });
+
+      const orderData = await res.json();
+      if (!res.ok || !orderData.orderId) {
+        toast.error(orderData.error || "Failed to initialize checkout");
+        return;
+      }
+
+      if (typeof window === "undefined" || !window.Razorpay) {
+        toast.error("Razorpay is initializing. Please try again in a few seconds.");
+        return;
+      }
+
+      const options = {
+        key: orderData.keyId,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "Dodail WhatsApp CRM",
+        description: `${orderData.planName} Plan (${billingCycle})`,
+        order_id: orderData.orderId,
+        theme: {
+          color: "#F15A22",
+        },
+        handler: async (response: any) => {
+          try {
+            const verifyRes = await fetch("/api/billing/razorpay/verify-payment", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                ...response,
+                planId,
+              }),
+            });
+            const verifyData = await verifyRes.json();
+            if (verifyRes.ok) {
+              toast.success("Payment verified! Redirecting to setup...");
+              window.location.href = `/signup?plan=${planId}&paid=true`;
+            } else {
+              toast.error(verifyData.error || "Payment verification failed");
+            }
+          } catch (err) {
+            console.error("Verification error:", err);
+            toast.error("Payment verification failed");
+          }
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (err) {
+      console.error("Checkout error:", err);
+      toast.error("Failed to initiate checkout");
+    } finally {
+      setCheckoutLoading(null);
+    }
+  };
 
   useEffect(() => {
     const supabase = createClient();
@@ -928,42 +1000,99 @@ export default function LandingPage() {
       </section>
 
       {/* 8. PLANS THAT SCALE WITH YOUR BUSINESS (PRICING) */}
-      <section id="pricing" className="py-20 border-t border-border/80 bg-[#FAFAFA] dark:bg-background">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-10">
-          <div className="text-center space-y-3">
-            <Badge variant="outline" className="border-orange-500/20 bg-orange-500/10 text-[#F15A22] text-xs font-bold">
-              {cms.pricing.badge}
-            </Badge>
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
+      <section
+        id="pricing"
+        aria-labelledby="pricing-heading"
+        className="py-24 border-t border-border/80 bg-gradient-to-b from-[#FAFAFA] via-background to-[#FAFAFA] dark:from-background dark:via-muted/10 dark:to-background relative overflow-hidden"
+      >
+        <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
+
+        {/* SEO Structured Data for Google Rich Snippets */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Product",
+              name: "Dodail WhatsApp CRM & Business Automation Platform",
+              description:
+                "Official WhatsApp Business CRM with shared inbox, visual flow builder, AI auto-replies, broadcasts, and direct Razorpay billing.",
+              brand: {
+                "@type": "Brand",
+                name: "Dodail",
+              },
+              offers: cms.pricing.plans.filter((p) => p.enabled).map((p) => ({
+                "@type": "Offer",
+                name: `${p.name} Plan`,
+                price: billingCycle === "annual" ? p.annual_inr : p.monthly_inr,
+                priceCurrency: "INR",
+                priceValidUntil: "2027-12-31",
+                availability: "https://schema.org/InStock",
+                url: "https://whatsappcrm.com#pricing",
+              })),
+            }),
+          }}
+        />
+
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-12">
+          {/* Header & Badges */}
+          <div className="text-center space-y-4 max-w-3xl mx-auto">
+            <div className="inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/10 px-3 py-1 text-xs font-bold text-[#F15A22]">
+              <Flame className="size-3.5 fill-[#F15A22]" />
+              <span>{cms.pricing.badge}</span>
+            </div>
+
+            <h2 id="pricing-heading" className="text-3xl sm:text-5xl font-black tracking-tight text-foreground">
               {cms.pricing.title}
             </h2>
-            <p className="text-sm text-muted-foreground max-w-xl mx-auto">
+
+            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
               {cms.pricing.subtitle}
             </p>
 
+            {/* Competitor Benchmark Comparison Banner */}
+            <div className="pt-2">
+              <div className="inline-flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2.5 text-xs text-emerald-800 dark:text-emerald-300 font-semibold shadow-xs">
+                <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
+                <span>
+                  <strong>Cost Advantage:</strong> Up to <strong>50% cheaper</strong> than Wati (₹2,499+) and Twilio ($0.005/msg markup). We charge <strong>0% markup</strong> on Meta API!
+                </span>
+              </div>
+            </div>
+
             {/* Monthly / Annual Billing Switcher */}
-            <div className="flex items-center justify-center gap-2 pt-3">
-              <div className="inline-flex items-center rounded-lg border border-border bg-white dark:bg-card p-1 text-xs font-semibold shadow-sm">
+            <div className="flex items-center justify-center pt-2">
+              <div
+                role="radiogroup"
+                aria-label="Billing cycle selector"
+                className="inline-flex items-center rounded-xl border border-border bg-white dark:bg-card p-1 text-xs font-semibold shadow-xs"
+              >
                 <button
+                  type="button"
+                  role="radio"
+                  aria-checked={billingCycle === "monthly"}
                   onClick={() => setBillingCycle("monthly")}
-                  className={`rounded-md px-3.5 py-1.5 transition-all ${
+                  className={`rounded-lg px-4 py-2 transition-all cursor-pointer font-bold ${
                     billingCycle === "monthly"
                       ? "bg-[#F15A22] text-white shadow-xs"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  Monthly
+                  Monthly Billing
                 </button>
                 <button
+                  type="button"
+                  role="radio"
+                  aria-checked={billingCycle === "annual"}
                   onClick={() => setBillingCycle("annual")}
-                  className={`rounded-md px-3.5 py-1.5 flex items-center gap-1.5 transition-all ${
+                  className={`rounded-lg px-4 py-2 flex items-center gap-1.5 transition-all cursor-pointer font-bold ${
                     billingCycle === "annual"
                       ? "bg-[#F15A22] text-white shadow-xs"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  <span>Annual</span>
-                  <span className="rounded bg-emerald-500/20 px-1 py-0.2 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                  <span>Annual Billing</span>
+                  <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400">
                     Save {cms.pricing.annual_discount_pct}%
                   </span>
                 </button>
@@ -971,64 +1100,114 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* 4 Pricing Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-stretch">
+          {/* 4 Responsive Pricing Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
             {cms.pricing.plans.filter((p) => p.enabled).map((plan) => {
-              const price =
-                billingCycle === "annual" ? plan.annual_inr : plan.monthly_inr;
+              const price = billingCycle === "annual" ? plan.annual_inr : plan.monthly_inr;
+              const isCheckingOut = checkoutLoading === plan.id;
+
               return (
                 <div
                   key={plan.id}
-                  className={`rounded-2xl border bg-white dark:bg-card p-6 flex flex-col justify-between transition-all ${
+                  className={`rounded-3xl border bg-card p-6 sm:p-7 flex flex-col justify-between transition-all duration-200 relative ${
                     plan.popular
-                      ? "border-[#F15A22] shadow-xl shadow-orange-500/10 ring-2 ring-[#F15A22]/20 relative"
-                      : "border-border shadow-sm hover:shadow-md"
+                      ? "border-[#F15A22] shadow-2xl shadow-orange-500/15 ring-2 ring-[#F15A22]/30 scale-[1.02] z-10"
+                      : "border-border shadow-xs hover:shadow-lg hover:border-border/80"
                   }`}
                 >
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-base font-bold text-foreground">{plan.name}</h3>
-                      {plan.popular && (
-                        <span className="rounded-full bg-[#F15A22] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
-                          Most Popular
+                  {plan.popular && (
+                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-orange-600 to-[#F15A22] px-4 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-md">
+                      ★ Most Popular Choice
+                    </div>
+                  )}
+
+                  <div className="space-y-5">
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-black text-foreground">{plan.name}</h3>
+                      </div>
+                      <p className="text-xs text-muted-foreground min-h-[32px] leading-relaxed">
+                        {plan.description}
+                      </p>
+                    </div>
+
+                    <div className="border-y border-border/60 py-4">
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-3xl sm:text-4xl font-black text-foreground tracking-tight">
+                          ₹{price.toLocaleString("en-IN")}
                         </span>
-                      )}
+                        <span className="text-xs text-muted-foreground font-semibold">/ month</span>
+                      </div>
+                      <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1">
+                        {billingCycle === "annual" ? "Billed annually • 20% discount applied" : "Billed monthly • Cancel anytime"}
+                      </div>
                     </div>
 
-                    <div>
-                      <span className="text-3xl font-black text-foreground">₹{price.toLocaleString("en-IN")}</span>
-                      <span className="text-xs text-muted-foreground"> / month</span>
+                    <div className="space-y-2.5">
+                      <span className="text-[11px] uppercase font-bold text-muted-foreground tracking-wider">
+                        Included Features
+                      </span>
+                      <ul className="space-y-2.5 text-xs text-foreground/90 font-medium">
+                        {plan.features.map((feat, fi) => (
+                          <li key={fi} className="flex items-start gap-2.5">
+                            <div className="flex size-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 mt-0.5">
+                              <Check className="size-2.5 stroke-[3]" />
+                            </div>
+                            <span className="leading-tight">{feat}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-
-                    <p className="text-xs text-muted-foreground">{plan.description}</p>
-
-                    <ul className="space-y-2 pt-3 border-t border-border/60 text-xs text-foreground/90 font-medium">
-                      {plan.features.map((feat, fi) => (
-                        <li key={fi} className="flex items-center gap-2">
-                          <Check className="size-3.5 text-emerald-500 shrink-0" />
-                          <span>{feat}</span>
-                        </li>
-                      ))}
-                    </ul>
                   </div>
 
-                  <div className="pt-6">
-                    <Link href={plan.cta_url} className="w-full">
+                  {/* Dual Action Buttons: Purchase Now & 7-Day Free Trial */}
+                  <div className="pt-6 space-y-2.5">
+                    <Button
+                      type="button"
+                      disabled={isCheckingOut}
+                      onClick={() => handleRazorpayCheckout(plan.id)}
+                      className={`w-full text-xs font-bold h-11 transition-all cursor-pointer shadow-sm ${
+                        plan.popular
+                          ? "bg-[#F15A22] hover:bg-[#d94a15] text-white"
+                          : "bg-foreground text-background hover:bg-foreground/90"
+                      }`}
+                    >
+                      <CreditCard className="mr-1.5 size-4" />
+                      {isCheckingOut ? "Connecting Razorpay..." : "Purchase Now"}
+                    </Button>
+
+                    <Link href={`/signup?plan=${plan.id}`} className="block w-full">
                       <Button
-                        className={`w-full text-xs font-bold h-10 ${
-                          plan.popular
-                            ? "bg-[#F15A22] hover:bg-[#d94a15] text-white shadow-sm"
-                            : "border-border bg-white dark:bg-card hover:bg-muted text-foreground"
-                        }`}
-                        variant={plan.popular ? "default" : "outline"}
+                        type="button"
+                        variant="outline"
+                        className="w-full text-xs font-semibold h-10 border-border hover:bg-muted text-muted-foreground hover:text-foreground cursor-pointer"
                       >
-                        {plan.cta_text}
+                        Start 7-Day Free Trial
                       </Button>
                     </Link>
+
+                    <p className="text-[10px] text-center text-muted-foreground pt-1">
+                      7-day max trial • Instant activation
+                    </p>
                   </div>
                 </div>
               );
             })}
+          </div>
+
+          {/* Trust & Guarantee Banner */}
+          <div className="rounded-2xl border border-border bg-card p-6 text-center text-xs text-muted-foreground max-w-2xl mx-auto shadow-xs">
+            <div className="flex flex-wrap items-center justify-center gap-6 font-semibold">
+              <span className="flex items-center gap-1.5">
+                <ShieldCheck className="size-4 text-[#F15A22]" /> 100% Meta Compliant
+              </span>
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="size-4 text-emerald-500" /> UPI, RuPay & All Cards Accepted
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Zap className="size-4 text-amber-500" /> Instant Activation
+              </span>
+            </div>
           </div>
         </div>
       </section>

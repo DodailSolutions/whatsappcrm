@@ -31,6 +31,7 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from '@/components/ui/accordion';
+import { WhatsAppGuidedConnector } from '@/components/whatsapp/whatsapp-guided-connector';
 import type { WhatsAppConfig as WhatsAppConfigType } from '@/types';
 
 const MASKED_TOKEN = '••••••••••••••••';
@@ -116,6 +117,7 @@ export function WhatsAppConfig() {
   // a viewer's toggle would match zero rows and appear to work.
   const [mirrorMedia, setMirrorMedia] = useState(true);
   const [savingMirror, setSavingMirror] = useState(false);
+  const [setupMode, setSetupMode] = useState<'guided' | 'advanced'>('guided');
 
   // True once /register has succeeded on Meta's side (timestamp set
   // in the row). When false, the saved config is metadata-only and
@@ -778,8 +780,54 @@ export function WhatsAppConfig() {
           </Alert>
         )}
 
-        {/* API Credentials */}
-        <Card className="border-border/80 shadow-2xs">
+        {/* Setup Mode Switcher */}
+        <div className="flex items-center justify-between rounded-xl border border-border bg-card p-3 shadow-2xs">
+          <div className="space-y-0.5">
+            <span className="text-xs font-bold text-foreground">Configuration Experience</span>
+            <p className="text-[11px] text-muted-foreground">Switch between beginner-friendly guided setup or manual raw entry.</p>
+          </div>
+          <div className="inline-flex rounded-lg border border-border bg-muted/40 p-1 text-xs font-semibold">
+            <button
+              type="button"
+              onClick={() => setSetupMode('guided')}
+              className={cn(
+                'rounded-md px-3 py-1.5 transition-all cursor-pointer font-bold',
+                setupMode === 'guided'
+                  ? 'bg-[#F15A22] text-white shadow-2xs'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              🚀 Step-by-Step Guide
+            </button>
+            <button
+              type="button"
+              onClick={() => setSetupMode('advanced')}
+              className={cn(
+                'rounded-md px-3 py-1.5 transition-all cursor-pointer font-bold',
+                setupMode === 'advanced'
+                  ? 'bg-foreground text-background shadow-2xs'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              ⚙️ Direct Credentials
+            </button>
+          </div>
+        </div>
+
+        {/* Guided Step-by-Step Experience for Laymen */}
+        {setupMode === 'guided' && (
+          <WhatsAppGuidedConnector
+            onSuccess={() => {
+              if (accountId) fetchConfig(accountId);
+            }}
+            initialPhoneId={phoneNumberId === MASKED_TOKEN ? '' : phoneNumberId}
+            initialWabaId={wabaId === MASKED_TOKEN ? '' : wabaId}
+          />
+        )}
+
+        {/* API Credentials (Advanced) */}
+        {setupMode === 'advanced' && (
+          <Card className="border-border/80 shadow-2xs">
           <CardHeader>
             <CardTitle className="text-foreground text-base font-semibold tracking-tight">{t('apiCredentialsTitle')}</CardTitle>
             <CardDescription className="text-foreground/70 dark:text-muted-foreground text-xs leading-relaxed">
@@ -888,6 +936,7 @@ export function WhatsAppConfig() {
             </div>
           </CardContent>
         </Card>
+        )}
 
         {/* Webhook URL */}
         <Card className="border-border/80 shadow-2xs">
